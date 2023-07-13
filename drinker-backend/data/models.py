@@ -120,9 +120,3 @@ class Tag(SqlAlchemyBase):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True)
 
-
-class Gallery(SqlAlchemyBase):
-    __tablename__ = "galleries"
-
-    gallery_id = Column(Integer, ForeignKey('gallery_details.id'), primary_key=True)
-    item_id = Column(Integer, ForeignKey('items.id'), primary_key=True)

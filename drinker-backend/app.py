@@ -3,7 +3,7 @@ from typing import List
 
 from data import db_session
 from data.db_session import Session
-from data.models import Account, User, Admin, AccountInfo, Card, CardDetails, Tag, Cart, Courier, Order, Gallery, Item
+from data.models import Account, User, Admin, AccountInfo, Card, CardDetails, Tag, Cart, Courier, Order, Item
 from const import FILENAME_DB
 from random import randrange
 
@@ -252,8 +252,6 @@ def items():
             return jsonify(status="ok", message="Changed"), 202
         if request.method == 'DELETE':
             item_id = request.json['item_id']
-            for elem in session.query(Gallery).filter(Gallery.item_id == item_id).all():
-                session.delete(elem)
             for elem in session.query(Cart).filter(Cart.item_id == item_id).all():
                 session.delete(elem)
             item: Item = session.query(Item).filter(Item.id == item_id).first()
@@ -261,11 +259,17 @@ def items():
                 return jsonify(status="fail", message=f"Not found item with id: {item_id}"), 404
             session.delete(item)
             session.commit()
+            return jsonify(status="ok", message="Deleted"), 202
 
 
-@app.route('/gallery', methods=['GET', 'POST'])
+@app.route('/gallery', methods=['GET'])
 def gallery():
-    pass
+    with db_session.create_session() as session:
+        session: Session
+        if request.method == 'GET':
+            gallery_id = request.json['id']
+        items_: List[Item] = session.query(Item).all()
+        return jsonify(status="ok", message="get all items"), 202
 
 
 if __name__ == "__main__":
