@@ -4,13 +4,17 @@ from typing import List
 from data import db_session
 from data.db_session import Session
 from data.models import *
-from const import FILENAME_DB
+from const import FILENAME_DB, StatusOrder
 from random import randrange
 
 app = Flask(__name__)
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 app.register_blueprint(bp)
+
+
+def generate_id():
+    return randrange(1_000_000_000_000_000)
 
 
 @app.route('/auth', methods=['GET'])
@@ -32,12 +36,16 @@ def register():
 
     with db_session.create_session() as session:
         session: Session
+
         if session.query(Account).filter(Account.login == login).first():
             return jsonify(status="fail", message="a user with such already exists"), 400
-        new_account = Account(id=randrange(1 << 16), login=login, password=password)
-        new_user = User(account_id=new_account.id)
+
+        new_cart = CartDetails(id=generate_id())
+        new_account = Account(id=generate_id(), login=login, password=password)
+        new_user = User(account_id=new_account.id, cart_id=new_cart.id)
         new_info = AccountInfo(account_id=new_account.id)
-        session.add_all([new_account, new_user, new_info])
+
+        session.add_all([new_account, new_user, new_info, new_cart])
         session.commit()
         return jsonify(status="ok", message="User registered successfully", account_id=new_account.id)
 
@@ -139,7 +147,8 @@ def user():
                 "cards": cards_data,
                 "passport": passport_data,
                 "birth": usr.birth,
-                "verified": usr.verified
+                "verified": usr.verified,
+                "cart_id": usr.cart_id,
             }), 202
         if request.method == "POST":
             if 'passport' in request.json:
@@ -189,7 +198,38 @@ def user_card():
 
 @app.route('/user/cart', methods=['GET', 'POST'])
 def user_cart():
-    pass
+    with db_session.create_session() as session:
+        session: Session
+
+        cart_id: int = request.json["cart_id"]
+        if request.method == "GET":
+            items_in_cart: List[Cart] = session.query(Cart).filter(Cart.cart_id == cart_id).all()
+            json_of_items_in_cart = []
+            for entry in items_in_cart:
+                json_of_items_in_cart.append({"cart_id": entry.cart_id, "count_items": entry.count_items})
+            return jsonify(status="ok", message="Fetched successfully", items=json_of_items_in_cart)
+
+        if request.method == "POST":
+            new_item = request.json["new_item"]
+            new_item_count = request.json["count"]
+
+            if new_item is None:
+                return jsonify(status="fail", message="Item ID is missing"), 400
+            if new_item_count is None:
+                new_item_count = 1
+            in_cart = session.query(Cart).filter(Cart.item_id == new_item).first()
+            if in_cart is None:
+                # item is new
+                new_cart = Cart(cart_id=cart_id, item_id=new_item, count_items=new_item_count)
+                session.add(new_cart)
+                session.commit()
+                return jsonify(status="ok", message="Added Successfully"), 202
+            # for old items we just change count
+            old_count = in_cart.count_items
+            in_cart.count_items = new_item_count + old_count
+            session.commit()
+            return jsonify(status="ok", message=f"Items added successfully; now {old_count + new_item_count}"), 202
+
 
 
 @app.route('/order', methods=['GET'])
@@ -345,6 +385,12 @@ def find_courier_orders():
 
 @app.route('/items', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def items():
+    pass
+
+
+@app.route('/tags', methods=['GET'])
+def tags():
+    pass
     with db_session.create_session() as session:
         session: Session
         if request.method == 'GET':
