@@ -1,0 +1,25 @@
+.top {
+    padding: 0.4rem;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+}
+
+.ico {
+    width: 3rem;
+    cursor: pointer;
+}
+
+.ico svg {
+    height: 70%;
+    width: 70%;
+    margin: 0 auto 0 auto;
+}
+
+.line {
+    width: 100%;
+    height: 2px;
+    background-color: black;
+    margin: 0.5rem 0 0.5rem 0;
+}
