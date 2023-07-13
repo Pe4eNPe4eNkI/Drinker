@@ -3,8 +3,10 @@ from typing import List
 
 from data import db_session
 from data.db_session import Session
-from data.models import Account, User, Admin, AccountInfo, Card, CardDetails, Tag, Cart, Courier, Order, Gallery, Item
-from const import FILENAME_DB
+from data.models import Account, User, Admin, AccountInfo, Card, CardDetails, OrderDetails, CartDetails, Tag, Cart, \
+    Courier, Order, \
+    Gallery, Item
+from const import FILENAME_DB, StatusOrder
 from random import randrange
 
 app = Flask(__name__)
@@ -114,17 +116,17 @@ def account_info():
 
 @app.route('/user', methods=['GET', 'POST'])
 def user():
-    account_id = request.json['account_id']
+    user_id = request.json['user_id']
 
     with db_session.create_session() as session:
         session: Session
 
-        usr: User = session.query(User).filter(User.account_id == account_id).first()
+        usr: User = session.query(User).filter(User.account_id == user_id).first()
         if not usr:
-            return jsonify(status="fail", message=f"Not found user with id {account_id}"), 404
+            return jsonify(status="fail", message=f"Not found user with id {user_id}"), 404
         if request.method == "GET":
             cards: List[Card] = list(
-                map(lambda x: x.card_number, session.query(Card).filter(Card.user_id == account_id).all()))
+                map(lambda x: x.card_number, session.query(Card).filter(Card.user_id == user_id).all()))
             cards_details: List[CardDetails] = session.query(CardDetails).filter(CardDetails.number.in_(cards)).all()
             cards_data = list(
                 map(lambda x: {"number": x.number, "names": x.names, "date": x.date, "cvi": x.cvi}, cards_details))
@@ -155,14 +157,14 @@ def user():
 
 @app.route('/user/card', methods=['PUT', 'DELETE'])
 def user_card():
-    account_id = request.json['account_id']
+    user_id = request.json['user_id']
 
     with db_session.create_session() as session:
         session: Session
 
-        usr: User = session.query(User).filter(User.account_id == account_id).first()
+        usr: User = session.query(User).filter(User.account_id == user_id).first()
         if not usr:
-            return jsonify(status="fail", message=f"Not found user with id {account_id}"), 404
+            return jsonify(status="fail", message=f"Not found user with id {user_id}"), 404
 
         if request.method == 'PUT':
             card = request.json['card']
@@ -171,15 +173,15 @@ def user_card():
                 names, date, cvi = card['names'], card['date'], card['cvi']
                 card_details = CardDetails(number=number, names=names, date=date, cvi=cvi)
                 session.add(card_details)
-            if session.query(Card).filter(Card.user_id == account_id, Card.card_number == number).first():
+            if session.query(Card).filter(Card.user_id == user_id, Card.card_number == number).first():
                 return jsonify(status="fail", message="card exists in user"), 400
-            card = Card(user_id=account_id, card_number=number)
+            card = Card(user_id=user_id, card_number=number)
             session.add(card)
             session.commit()
             return jsonify(status="ok", message="Card added"), 202
         if request.method == 'DELETE':
             card_number = request.json['card']['number']
-            card = session.query(Card).filter(Card.user_id == account_id, Card.card_number == card_number).first()
+            card = session.query(Card).filter(Card.user_id == user_id, Card.card_number == card_number).first()
             if not card:
                 return jsonify(status='fail', message='Not found card in user'), 404
             session.delete(card)
@@ -192,14 +194,155 @@ def user_cart():
     pass
 
 
-@app.route('/make_order', methods=['PUT'])
-def make_order():
-    pass
-
-
-@app.route('/order', methods=['GET', 'POST'])
+@app.route('/order', methods=['GET'])
 def order():
-    pass
+    order_id = request.json['order_id']
+    with db_session.create_session() as session:
+        session: Session
+        pass
+
+
+@app.route('/order/make', methods=['PUT'])
+def make_order():
+    user_id = request.json['user_id']
+    address = request.json['address']
+    with db_session.create_session() as session:
+        session: Session
+        usr: Cart = session.query(User).filter(User.account_id == user_id).first()
+        if not usr:
+            return jsonify(status="fail", message=f"Not found user with id: {user_id}"), 404
+        order_details = OrderDetails(id=randrange(1 << 16), cart_id=usr.cart_id, address=address)
+        order_ = Order(order_id=order_details.id, user_id=user_id, courier_id=None)
+
+        cart = CartDetails(randrange(1 << 16))
+        usr.cart_id = cart.id
+        session.add_all([order_details, order_, cart])
+        session.commit()
+        return jsonify(status="ok", message="created order", order_id=order_details.id), 202
+
+
+@app.route('/order/free', methods=['GET'])
+def free_orders():
+    """
+    ---- ---- JSON
+    ---- GET
+    params: {}
+    return: {
+        status: ok | fail,
+        message: str,
+        orders=[
+            {
+                id: int,
+                cart_id: int,
+                address: str,
+                status: enum
+            }
+        ]
+    }
+    """
+
+    with db_session.create_session() as session:
+        session: Session
+
+        orders: List[Order] = session.query(Order).filter(Order.courier_id.is_(None))
+        order_ids = list(map(lambda x: x.order_id, orders))
+        order_details: List[OrderDetails] = session.query(OrderDetails).filter(OrderDetails.id.in_(order_ids)).all()
+        order_data = [{"id": x.id, "cart_id": x.cart_id, "address": x.address, "status": x.status} for x in
+                      order_details]
+        return jsonify(status="ok", message="free orders", orders=order_data), 202
+
+
+@app.route('/order/accept', method=['POST'])
+def order_accept():
+    """
+
+    """
+
+    order_id = request.json['order_id']
+    courier_id = request.json['order_id']
+    with db_session.create_session() as session:
+        session: Session
+
+        order_: Order = session.query(Order).filter(Order.order_id == order_id).first()
+        if not session.query(Courier).filter(Courier.account_id == courier_id):
+            return jsonify(status="fail", message=f"Not found courier with id: {courier_id}"), 404
+        order_.courier_id = courier_id
+        order_details: OrderDetails = session.query(OrderDetails).filter(OrderDetails.id == order_id).first()
+        order_details.status = StatusOrder.ON_WAY
+        session.commit()
+        return jsonify(status="ok", message=f"Accepted order")
+
+
+@app.route('/order/done', method=['POST'])
+def order_done():
+    """
+
+    """
+    order_id = request.json['order_id']
+    with db_session.create_session() as session:
+        session: Session
+
+        order_details: OrderDetails = session.query(OrderDetails).filter(
+            OrderDetails.id == order_id, OrderDetails.status != StatusOrder.DONE).first()
+        if not order_details:
+            return jsonify(status="fail", message=f"Not found order with id: {order_id}"), 404
+        order_details.status = StatusOrder.DONE
+        session.commit()
+        return jsonify(status="ok", message=f"Order is done")
+
+
+@app.route('/order/fail', method=['POST'])
+def order_fail():
+    """
+
+    """
+
+    order_id = request.json['order_id']
+    with db_session.create_session() as session:
+        session: Session
+
+        order_details: OrderDetails = session.query(OrderDetails).filter(OrderDetails.id == order_id).first()
+        if not order_details:
+            return jsonify(status="fail", message=f"Not found order with id: {order_id}"), 404
+        order_details.status = StatusOrder.FAILED
+        session.commit()
+        return jsonify(status="ok", message=f"Order is fail")
+
+
+@app.route('/order/user', methods=['GET'])
+def find_user_orders():
+    """
+
+    """
+
+    user_id = request.json['user_id']
+    with db_session.create_session() as session:
+        session: Session
+
+        order_ids: List[int] = list(
+            map(lambda x: x.order_id, session.query(Order).filter(Order.user_id == user_id).all()))
+        orders: List[OrderDetails] = session.query(OrderDetails).filter(OrderDetails.id.in_(order_ids)).all()
+        order_data = [{"id": x.id, "cart_id": x.cart_id, "address": x.address, "status": x.status} for x in
+                      orders]
+        return jsonify(status="ok", message="user orders", orders=order_data)
+
+
+@app.route('/order/courier', methods=['GET'])
+def find_courier_orders():
+    """
+
+    """
+
+    courier_id = request.json['user_id']
+    with db_session.create_session() as session:
+        session: Session
+
+        order_ids: List[int] = list(
+            map(lambda x: x.order_id, session.query(Order).filter(Order.courier_id == courier_id).all()))
+        orders: List[OrderDetails] = session.query(OrderDetails).filter(OrderDetails.id.in_(order_ids)).all()
+        order_data = [{"id": x.id, "cart_id": x.cart_id, "address": x.address, "status": x.status} for x in
+                      orders]
+        return jsonify(status="ok", message="courier orders", orders=order_data)
 
 
 @app.route('/items', methods=['GET', 'PUT', 'POST', 'DELETE'])
