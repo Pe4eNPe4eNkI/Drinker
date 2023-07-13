@@ -1,4 +1,4 @@
-from db_session import SqlAlchemyBase
+from .db_session import SqlAlchemyBase
 from sqlalchemy import ForeignKey, Column, String, Integer, Float, Boolean
 
 
@@ -55,7 +55,7 @@ class Card(SqlAlchemyBase):
     __tablename__ = "cards"
 
     user_id = Column(Integer, ForeignKey('users.account_id'), primary_key=True)
-    card_number = Column(String, ForeignKey('card_details.id'), primary_key=True)
+    card_number = Column(String, ForeignKey('card_details.number'), primary_key=True)
 
 
 class CartDetails(SqlAlchemyBase):
