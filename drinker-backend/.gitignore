@@ -1,2 +1,4 @@
 .idea
 data/main.db
+tests.py
+__pycache__

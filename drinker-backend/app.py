@@ -1,101 +1,123 @@
 from flask import Flask, Blueprint, jsonify, request
 from data import db_session
-from data.models import Account, AccountInfo, Card, Cart, Courier, Order, Gallery, Item
-from hashlib import sha256
+from data.db_session import Session
+from data.models import Account, User, Admin, AccountInfo, Card, Cart, Courier, Order, Gallery, Item
+from const import FILENAME_DB
+from random import randrange
+
 app = Flask(__name__)
 
-bp = Blueprint('api', __name__)
-app.register_blueprint(bp, url_prefix="/api")
+bp = Blueprint('api', __name__, url_prefix='/api')
+app.register_blueprint(bp)
 
 
-@bp.route('/auth', methods=['GET'])
+@app.route('/auth', methods=['GET'])
 def auth():
     login = request.json["login"]
-    password = sha256(request.json["password"])
+    password = request.json["password"]
 
     with db_session.create_session() as session:
-        if session.query(Account).filter(Account.login == login, Account.password == password).first():
-            return jsonify(status="fail", message="incorrect login or password")
-    return jsonify(status="ok", message="successful login"), 202
+        acc: Account = session.query(Account).filter(Account.login == login, Account.password == password).first()
+        if not acc:
+            return jsonify(status="fail", message="incorrect login or password"), 403
+        return jsonify(status="ok", message="successful login", account_id=acc.id), 202
 
 
-@bp.route('/register', methods=['PUT'])
+@app.route('/register', methods=['PUT'])
 def register():
     login = request.json["login"]
-    password = sha256(request.json["password"])
+    password = request.json["password"]
+
+    with db_session.create_session() as session:
+        session: Session
+        if session.query(Account).filter(Account.login == login).first():
+            return jsonify(status="fail", message="a user with such already exists"), 400
+        new_account = Account(id=randrange(1 << 16), login=login, password=password)
+        new_user = User(account_id=new_account.id)
+        new_info = AccountInfo(account_id=new_account.id)
+        session.add_all([new_account, new_user, new_info])
+        session.commit()
+        return jsonify(status="ok", message="User registered successfully", account_id=new_account.id)
 
 
-@bp.route('/account', methods=['POST', 'DELETE'])
+@app.route('/account', methods=['POST', 'DELETE'])
 def account():
-    pass
+    with db_session.create_session() as session:
+        session: Session
+
+        account_id: int = request.json["account_id"]
+        acc: Account = session.query(Account).filter(Account.id == account_id).first()
+        if not acc:
+            return jsonify(status="fail", message=f"Not found account with id {account_id}"), 404
+
+        if request.method == 'POST':
+            login: str = request.json.get("login", None)
+            password: str = request.json.get("password", None)
+            if login:
+                if not session.query(Account).filter(Account.login == login).first():
+                    acc.login = login
+                else:
+                    return jsonify(status="fail", message="login already exists"), 409
+            if password:
+                acc.password = password
+            session.commit()
+            return jsonify(status="ok", message="Changed"), 202
+
+        if request.method == "DELETE":
+            usr = session.query(User).filter(User.account_id == account_id).first()
+            adm = session.query(Admin).filter(Admin.account_id == account_id).first()
+            crr = session.query(Courier).filter(Courier.account_id == account_id).first()
+            if usr:
+                session.delete(usr)
+            if adm:
+                session.delete(adm)
+            if crr:
+                session.delete(crr)
+            session.delete(acc)
+            session.commit()
+            return jsonify(status="ok", message="Deleted"), 202
 
 
-@bp.route('/account/info', methods=['GET', 'POST'])
+@app.route('/account/info', methods=['GET', 'POST'])
 def account_info():
     pass
 
 
-@bp.route('/user', methods=['POST', 'DELETE'])
+@app.route('/user', methods=['POST'])
 def user():
     pass
 
 
-@bp.route('/admin', methods=['POST', 'DELETE'])
-def admin():
-    pass
-
-
-@bp.route('/courier', methods=['POST', 'DELETE'])
-def courier():
-    pass
-
-
-@bp.route('/card', methods=['GET', 'POST'])
+@app.route('/card', methods=['GET', 'PUT'])
 def card():
     pass
 
 
-@bp.route('/card/details', methods=['GET, POST, PUT'])
-def card_details():
-    pass
-
-
-@bp.route('/order', methods=['GET', 'POST'])
+@app.route('/order', methods=['GET', 'POST'])
 def order():
     pass
 
 
-@bp.route('/order/details', methods=['GET', 'POST'])
-def order_details():
-    pass
-
-
-@bp.route('/cart', methods=['GET', 'POST'])
+@app.route('/cart', methods=['GET', 'POST'])
 def cart():
     pass
 
 
-@bp.route('/cart/details', methods=['GET, POST, PUT'])
-def cart_details():
-    pass
-
-
-@bp.route('/items', methods=['GET'])
+@app.route('/items', methods=['GET', 'PUT', 'POST'])
 def items():
     pass
 
 
-@bp.route('/make_order', methods=['PUT'])
+@app.route('/make_order', methods=['PUT'])
 def make_order():
     pass
 
 
-@bp.route('/gallery', methods=['GET', 'POST'])
+@app.route('/gallery', methods=['GET', 'POST'])
 def gallery():
     pass
 
 
-@bp.route('/gallery/details', methods=['GET', 'POST'])
-def gallery_details():
-    pass
-
+if __name__ == "__main__":
+    db_session.global_init(FILENAME_DB)
+    app.run(host="127.0.0.1", port=5000)
