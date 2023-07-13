@@ -1,5 +1,5 @@
 from .db_session import SqlAlchemyBase
-from sqlalchemy import ForeignKey, Column, String, Integer, Float, Boolean
+from sqlalchemy import ForeignKey, Column, String, Integer, Float, Boolean, Date
 
 
 class Account(SqlAlchemyBase):
@@ -25,8 +25,8 @@ class User(SqlAlchemyBase):
     __tablename__ = "users"
 
     account_id = Column(Integer, ForeignKey('accounts.id'), primary_key=True)
-
     passport = Column(String)
+    birth = Column(String)
     verified = Column(Boolean, nullable=False, default=False)
 
 
