@@ -290,7 +290,7 @@ def free_orders():
         return jsonify(status="ok", message="free orders", orders=order_data), 202
 
 
-@app.route('/order/accept', method=['POST'])
+@app.route('/order/accept', methods=['POST'])
 def order_accept():
     """
 
@@ -311,7 +311,7 @@ def order_accept():
         return jsonify(status="ok", message=f"Accepted order")
 
 
-@app.route('/order/done', method=['POST'])
+@app.route('/order/done', methods=['POST'])
 def order_done():
     """
 
@@ -329,7 +329,7 @@ def order_done():
         return jsonify(status="ok", message=f"Order is done")
 
 
-@app.route('/order/fail', method=['POST'])
+@app.route('/order/fail', methods=['POST'])
 def order_fail():
     """
 
