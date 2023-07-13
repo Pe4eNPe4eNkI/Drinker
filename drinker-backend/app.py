@@ -233,11 +233,17 @@ def user_cart():
 
 @app.route('/order', methods=['GET'])
 def order():
-    order_id = request.json['order_id']
     with db_session.create_session() as session:
         session: Session
-        pass
-
+        order_id_ = request.json['order_id']
+        order_: Order = session.query(Order).filter(Order.order_id == order_id_).first() # TODO: Check
+        if not order_:
+            return jsonify(status='fail', message=f'Not found item with id: {order_id_}'), 404
+        if order_.user_id:
+            usr: Order = session.query(Order).filter(Order.id == Order.user_id)
+        if order_.courier_id:
+            usr: Order = session.query(Order).filter(Order.id == Order.courier_id)
+        return jsonify(order_id=order_.order_id, user_id=order_.user_id, courier_id=order_.courier_id)
 
 @app.route('/order/make', methods=['PUT'])
 def make_order():
