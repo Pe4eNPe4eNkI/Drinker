@@ -112,19 +112,13 @@ class Item(SqlAlchemyBase):
     price = Column(Float, nullable=False)
     image_url = Column(String)
     desc = Column(String)
+    tag_id = Column(Integer, ForeignKey('tags.id'))
 
 
-class Tags(SqlAlchemyBase):
+class Tag(SqlAlchemyBase):
     __tablename__ = "tags"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True)
-
-
-class ItemTags(SqlAlchemyBase):
-    __tablename__ = "item_tags"
-
-    item_id = Column(Integer, ForeignKey('items.id'), primary_key=True)
-    tag_id = Column(Integer, ForeignKey('tags.id'), primary_key=True)
 
 
 class Gallery(SqlAlchemyBase):
