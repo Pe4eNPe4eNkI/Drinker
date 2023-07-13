@@ -35,13 +35,48 @@ def account_info():
     pass
 
 
+@bp.route('/user', methods=['POST', 'DELETE'])
+def user():
+    pass
+
+
+@bp.route('/admin', methods=['POST', 'DELETE'])
+def admin():
+    pass
+
+
+@bp.route('/courier', methods=['POST', 'DELETE'])
+def courier():
+    pass
+
+
+@bp.route('/card', methods=['GET', 'POST'])
+def card():
+    pass
+
+
+@bp.route('/card/details', methods=['GET, POST, PUT'])
+def card_details():
+    pass
+
+
 @bp.route('/order', methods=['GET', 'POST'])
 def order():
     pass
 
 
+@bp.route('/order/details', methods=['GET', 'POST'])
+def order_details():
+    pass
+
+
 @bp.route('/cart', methods=['GET', 'POST'])
 def cart():
+    pass
+
+
+@bp.route('/cart/details', methods=['GET, POST, PUT'])
+def cart_details():
     pass
 
 
@@ -53,3 +88,14 @@ def items():
 @bp.route('/make_order', methods=['PUT'])
 def make_order():
     pass
+
+
+@bp.route('/gallery', methods=['GET', 'POST'])
+def gallery():
+    pass
+
+
+@bp.route('/gallery/details', methods=['GET', 'POST'])
+def gallery_details():
+    pass
+
