@@ -34,6 +34,7 @@ class User(SqlAlchemyBase):
     account_id = Column(Integer, ForeignKey('accounts.id'), primary_key=True)
     passport = Column(String)
     birth = Column(String)
+    cart_id = Column(Integer, ForeignKey('cart_details.id'), nullable=False)
     verified = Column(Boolean, nullable=False, default=False)
 
 
@@ -76,7 +77,7 @@ class Cart(SqlAlchemyBase):
 
     cart_id = Column(Integer, ForeignKey('cart_details.id'), primary_key=True)
     item_id = Column(Integer, ForeignKey('items.id'), primary_key=True)
-    count_items = Column(Integer, nullable=False)
+    count_items = Column(Integer, nullable=False, default=1)
 
 
 class Order(SqlAlchemyBase):
