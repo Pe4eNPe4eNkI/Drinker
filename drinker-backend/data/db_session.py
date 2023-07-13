@@ -22,14 +22,14 @@ Session.__enter__ = __enter__
 Session.__exit__ = __exit__
 
 
-def global_init(db_file):
+def global_init(db_file: str) -> None:
     global __factory
 
     if __factory:
         return
 
     if not db_file or not db_file.strip():
-        raise Exception("Необходимо указать файл базы данных.")
+        raise ValueError("Необходимо указать файл базы данных.")
 
     # noinspection PyUnresolvedReferences
     from data import models
