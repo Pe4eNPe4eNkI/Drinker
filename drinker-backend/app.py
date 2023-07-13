@@ -80,7 +80,34 @@ def account():
 
 @app.route('/account/info', methods=['GET', 'POST'])
 def account_info():
-    pass
+    with db_session.create_session() as session:
+        session: Session
+
+        account_id: int = request.json["account_id"]
+        acc: Account = session.query(Account).filter(Account.id == account_id).first()
+        if not acc:
+            return jsonify(status="fail", message=f"Account with id{account_id} does not exit"), 410
+
+        acc_info: AccountInfo = session.query(AccountInfo).filter(AccountInfo.account_id == account_id).first()
+        if request.method == 'GET':
+            return jsonify(login=acc.login, name=acc_info.name, middlename=acc_info.middlename, surname=acc_info.surname, phone=acc_info.phone)
+        # adds data from json to AccountInfo; AccountInfo is created on registration
+        if request.method == 'POST':
+            acc_name = request.json["name"]
+            acc_surname = request.json["surname"]
+            acc_middlename = request.json["middlename"]
+            acc_phone = request.json["phone"]
+            if acc_name:
+                acc_info.name = acc_name
+            if acc_surname:
+                acc_info.surname = acc_surname
+            if acc_middlename:
+                acc_info.middlename = acc_middlename
+            if acc_phone:
+                acc_info.phone = acc_phone
+            session.commit()
+            return jsonify(status="ok", message=f"Account {account_id} details were changed successfully"), 202
+
 
 
 @app.route('/user', methods=['POST'])
