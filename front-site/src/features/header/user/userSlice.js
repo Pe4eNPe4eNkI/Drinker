@@ -1,8 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    mode: 'order',
-    accountType: 'courier',
+    mode: 'edit',
     info: {
         name: 'aa',
         surname: 'bb',
@@ -39,6 +38,5 @@ export const selectMode = (state) => state.user.mode;
 export const selectInfo = (state) => state.user.info;
 export const selectPassport = (state) => state.user.passport;
 export const selectCards = (state) => state.user.cards;
-export const selectAccType = (state) => state.user.accountType;
 
 export default userSlice.reducer;

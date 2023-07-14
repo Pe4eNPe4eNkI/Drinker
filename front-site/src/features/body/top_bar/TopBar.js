@@ -3,7 +3,7 @@ import styles from './TopBar.module.css';
 import search from './SearchMagnifyingGlass.svg';
 import { selectTag, setSearch, selectSearch } from '../bodySlice';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectAccType } from '../../header/user/userSlice';
+import { selectAccType } from '../../header/headerSlice';
 import { useState } from 'react';
 import ReactModal from 'react-modal';
 import Modal from '../../modal/Modal';

@@ -14,7 +14,7 @@ import RightSide from './user/right_side/RightSide';
 import { selectUserLogin } from './headerSlice';
 import StartButtons from './start_buttons/StartButton';
 import Cart from './cart/Crat';
-import { selectAccType } from './user/userSlice';
+import { selectAccType } from './headerSlice';
 
 function Header() {
   const [mode, setMode] = useState('none');

@@ -5,7 +5,7 @@ import Separate from '../separate/Separate';
 import Gallery from './gallery/Gallery';
 import Category from './category/Category';
 import { useSelector } from 'react-redux';
-import { selectAccType } from '../header/user/userSlice';
+import { selectAccType } from '../header/headerSlice';
 import Courier from './courier/Courier';
 
 function Body() {

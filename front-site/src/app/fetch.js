@@ -4,6 +4,7 @@ export async function Fetch({
     args = {}
   }) {
     let str = JSON.stringify(args);
+    let json = {}
 
     if (method == 'GET') str = undefined;
   
@@ -26,7 +27,7 @@ export async function Fetch({
         throw Error(res.statusText);
       }
   
-      if (json.status == "error") {
+      if (json.status == "fail") {
         throw Error(json.error);
       }
     } catch (err) {

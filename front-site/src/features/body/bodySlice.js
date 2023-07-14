@@ -3,20 +3,6 @@ import { Fetch } from "../../app/fetch";
 
 const initialState = {
     items: [
-        {
-            id: 1,
-            name: 'aaa',
-            price: '123',
-            img: 'https://hips.hearstapps.com/del.h-cdn.co/assets/cm/15/11/3200x3272/54f65d39ab05d_-_183341797.jpg?resize=1200:*',
-            tag: 'a',
-        },
-        {
-            id: 2,
-            name: 'bbb',
-            price: '321',
-            img: 'https://en.wikiquote.org/wiki/Beer#/media/File:Beer_mug.svg',
-            tag: 'b'
-        }
     ],
     tag: 'none',
     search: '',
@@ -25,15 +11,69 @@ const initialState = {
 export const getItems = createAsyncThunk(
     'body/getItems',
     async (amount) => {
-        let response;
+        let json;
         try {
-            response = await Fetch({
-                ulr: 'gallery',
+            json = await Fetch({
+                url: 'gallery',
                 method: 'POST',
             });
         } catch (err) {
             console.dir(err);
         }
+
+        return json.items;
+    }
+)
+
+export const putItem = createAsyncThunk(
+    'body/putItem',
+    async ({
+        name,
+        price,
+        image_url
+    }) => {
+            let json;
+            try {
+                json = await Fetch({
+                    method: 'PUT',
+                    url: 'items',
+                    args: {
+                        name,
+                        price,
+                        image_url,
+                        desc: 'aaaa',
+                        id_tag: 1,
+                    }
+                });
+            } catch(err) {console.log(err)}
+
+            return json;
+        }
+);
+
+export const addToCart = createAsyncThunk(
+    'addToCart',
+    async ({
+        item_id,
+        cart_id,
+        count,
+    }) => {
+        let json;
+        try {
+            json = await Fetch({
+                method: 'POST',
+                url: 'user/cart',
+                args: {
+                    cart_id,
+                    item_id,
+                    count,
+                }
+            })
+        } catch(err) {
+            console.log(err);
+        }
+
+        return json;
     }
 )
 
@@ -51,6 +91,12 @@ export const bodySlice = createSlice({
                 state.tag = action.payload;
             }
         }
+    },
+    extraReducers: (builder) => {
+        builder
+        .addCase(getItems.fulfilled, (state, action) => {
+            state.items = action.payload;
+        })
     }
 });
 

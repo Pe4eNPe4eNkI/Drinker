@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styles from './Category.module.css';
 import { useSelector, useDispatch } from 'react-redux';
 import { setMode, selectMode } from '../userSlice';
-import { selectAccType } from '../userSlice';
+import { selectAccType } from '../../headerSlice';
 
 function Category() {
     const dispatch = useDispatch();
