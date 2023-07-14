@@ -12,13 +12,25 @@ app = Flask(__name__)
 bp = Blueprint('api', __name__, url_prefix='/api')
 app.register_blueprint(bp)
 
-
-def generate_id():
+def generate_id(): # placeholder
     return randrange(1_000_000_000_000_000)
 
 
 @app.route('/auth', methods=['GET'])
 def auth():
+    """
+    ---- ---- JSON
+    ---- GET
+    params: {
+        login: str
+        password: str
+    }
+    return: {
+        status: ok | fail,
+        message: str,
+        account_id: int
+    }
+    """
     login = request.json["login"]
     password = request.json["password"]
 
@@ -31,6 +43,19 @@ def auth():
 
 @app.route('/register', methods=['PUT'])
 def register():
+    """
+    ---- ---- JSON
+    ---- PUT
+    params: {
+        login: str
+        password: str
+    }
+    return: {
+        status: ok | fail,
+        message: str,
+        account_id: int
+    }
+    """
     login = request.json["login"]
     password = request.json["password"]
 
@@ -52,6 +77,35 @@ def register():
 
 @app.route('/account', methods=['POST', 'DELETE'])
 def account():
+
+    """
+    ---- ---- JSON
+    ---- POST
+
+    changes password and or login of account
+
+    params: {
+        account_Id: int
+        login: str
+        password: str
+    }
+    return: {
+        status: ok | fail,
+        message: str,
+    }
+
+    ---- DELETE
+
+    deletes account of user and all records associeted with it
+
+    params: {
+        account_Id: int
+    }
+    return: {
+        status: ok | fail,
+        message: str,
+    }
+    """
     with db_session.create_session() as session:
         session: Session
 
@@ -90,6 +144,38 @@ def account():
 
 @app.route('/account/info', methods=['GET', 'POST'])
 def account_info():
+    """
+    ---- ---- JSON
+    ---- GET
+
+    params: {
+        account_Id: int
+    }
+    return: {
+        status: ok | fail,
+        message: str,
+        login: str,
+        name: str,
+        middlename: str,
+        surname: str,
+        phone: str
+
+    }
+    ---- POST
+
+    params: {
+        account_Id: int
+        name: str,
+        middlename: str,
+        surname: str,
+        phone: str
+    }
+    return: {
+        status: ok | fail,
+        message: str
+
+    }
+    """
     with db_session.create_session() as session:
         session: Session
 
@@ -100,9 +186,8 @@ def account_info():
 
         acc_info: AccountInfo = session.query(AccountInfo).filter(AccountInfo.account_id == account_id).first()
         if request.method == 'GET':
-            return jsonify(login=acc.login, name=acc_info.name, middlename=acc_info.middlename,
+            return jsonify(status="ok", message="Account found", login=acc.login, name=acc_info.name, middlename=acc_info.middlename,
                            surname=acc_info.surname, phone=acc_info.phone)
-        # adds data from json to AccountInfo; AccountInfo is created on registration
         if request.method == 'POST':
             acc_name = request.json["name"]
             acc_surname = request.json["surname"]
@@ -122,6 +207,16 @@ def account_info():
 
 @app.route('/user', methods=['GET', 'POST'])
 def user():
+    """
+    ---- ---- JSON
+    ---- GET
+    :param: {
+        user_id
+    }
+
+
+    :return
+    """
     user_id = request.json['user_id']
 
     with db_session.create_session() as session:
