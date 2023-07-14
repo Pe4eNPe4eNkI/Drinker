@@ -11,13 +11,10 @@ from data import db_session
 from data.db_session import Session
 from data.models import *
 
+app = Flask(__name__)
 
-class Main:
-    app = Flask(__name__)
 
-    @staticmethod
-    def generate_id():  # placeholder
-        return randrange(1_000_000_000_000_000)
+class AccountSystem:
 
     @staticmethod
     @app.route('/auth', methods=['GET'])
@@ -411,6 +408,8 @@ class Main:
                 session.commit()
                 return jsonify(status="ok", message=f"Items added successfully; now {old_count + new_item_count}"), 202
 
+
+class OrderManager:
     @staticmethod
     @app.route('/order', methods=['GET'])
     def order():
@@ -666,6 +665,9 @@ class Main:
                           orders]
             return jsonify(status="ok", message="courier orders", orders=order_data), 202
 
+
+class ItemManager:
+
     @staticmethod
     @app.route('/tags', methods=['GET'])
     def tags():
@@ -781,7 +783,7 @@ class Main:
                 item_desc = request.json.get('desc')
                 item_tag = request.json.get('tag_id')
                 if item_tag is not None and not session.query(Tag).filter(Tag.id == item_tag).first():
-                    return jsonify(status="fail", message=f"Not found tag with id: {item_tag}"), 404
+                    return jsonify(status="fail", message=f"Not found tag with id: {item_tag}")
                 item = Item(id=item_id, name=item_name, price=item_price, image_url=item_image_url, desc=item_desc,
                             tag_id=item_tag)
                 session.add(item)
@@ -853,6 +855,12 @@ class Main:
 
             return jsonify(status="ok", message="get all items", items=items_json), 202
 
+
+class Main:
+    @staticmethod
+    def generate_id():  # placeholder
+        return randrange(1_000_000_000_000_000)
+
     @staticmethod
     def init_default_db():
         with db_session.create_session() as session:
@@ -891,7 +899,7 @@ class Main:
         if '--reset' in sys.argv:
             Main.init_default_db()
 
-        Main.app.run(host="0.0.0.0", port=5000)
+        app.run(host="0.0.0.0", port=5000)
 
 
 if __name__ == "__main__":
