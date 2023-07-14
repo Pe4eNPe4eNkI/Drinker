@@ -423,7 +423,6 @@ class AccountSystem:
                     {"cart_id": entry.cart_id, "item_id": entry.item_id, "count_items": entry.count_items})
             return jsonify(status="ok", message="Fetched successfully", items=json_of_items_in_cart), 202
 
-
     @staticmethod
     @app.route('/user/cart', methods=['POST'])
     def user_cart():
@@ -1027,6 +1026,7 @@ class Main:
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
         return response
+
 
 if __name__ == "__main__":
     Main.main()
