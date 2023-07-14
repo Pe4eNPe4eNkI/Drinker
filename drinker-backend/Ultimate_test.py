@@ -26,14 +26,13 @@ def AddInfo(acc_id_, name_, middlename_, surname_, phone_):
 
 
 def AddItem(id_, name_, tag_id_, price_):
-    print()
-    print("add item:")
-    print(requests.put(f'{url}/items', json={
+    add_req = requests.put(f'{url}/items', json={
         "id": id_,
         "name": name_,
         "tag_id": tag_id_,
         "price": price_
-    }).content)
+    })
+    return add_req.json()["status"]
 
 
 def GetGallery():
