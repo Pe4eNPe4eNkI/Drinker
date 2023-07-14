@@ -1,0 +1,23 @@
+.container {
+    width: 95%;
+    margin: 0 auto 1rem auto;
+    background-color: #FFE8DA;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.container>div {
+    margin-bottom: .5rem;
+}
+
+.order {
+    background-color: #FFD8C1;
+    box-sizing: border-box;
+    padding: 1rem;
+}
+
+.result {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+}

@@ -1,0 +1,20 @@
+.container {
+    padding: 4rem 0rem 0 3rem;
+    box-sizing: border-box;
+}
+
+.item {
+    font-family: 'Open Sans';
+    font-weight: normal;
+    font-size: 2rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: .3rem;
+    color: #878787;
+    transition: .2s;
+}
+
+.active {
+    color: #000000;
+}

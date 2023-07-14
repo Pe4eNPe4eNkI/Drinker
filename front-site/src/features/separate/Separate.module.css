@@ -1,0 +1,13 @@
+.container {
+    width: 90%;
+    display: flex;
+    margin: 2rem auto 2rem auto;
+}
+
+.container>div:last-child {
+    width: 80%;
+}
+
+.container>div:first-child {
+    width: 20%;
+}

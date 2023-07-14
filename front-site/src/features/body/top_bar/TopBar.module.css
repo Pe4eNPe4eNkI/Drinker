@@ -1,0 +1,60 @@
+.topBar {
+    width: 90%;
+    display: flex;
+    margin: 0 auto 0 auto;
+}
+
+.title {
+    width: 20%;
+    color: black;
+    font-family: 'Open Sans';
+    font-weight: normal;
+    font-size: 1.7rem;
+}
+
+.whatSearch {
+    width: 40%;
+    color: black;
+    font-family: 'Open Sans';
+    font-weight: bold;
+    font-size: 1.7rem;
+}
+
+.searchWrapp {
+    width: 40%;
+}
+
+.search {
+    margin-left: auto;
+    width: 50%;
+    border-radius: .5rem;
+    background-color: #D9D9D9;
+    padding: .5rem;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.searchIco {
+    width: 20px;
+    margin-right: 10px;
+}
+
+.searchIco>img {
+    width: 100%;
+}
+
+.searchInput {
+    flex-grow: 1;
+    outline: none;
+    background-color: #00000000;
+    border: none;
+}
+
+.underline {
+    width: 100%;
+    height: 2px;
+    background-color: black;
+    margin-top: 1rem;
+}
