@@ -213,9 +213,25 @@ def user():
     :param: {
         user_id
     }
-
-
-    :return
+    :return: {
+        status: ok|fail
+        message: str
+        user={
+            cards= [{
+                number: str
+                names: str
+                date: str
+                cvi: str
+            }],
+            passport={
+                serial: int
+                number: int
+            },
+            birth: str,
+            verified: bool,
+            cart_id: int,
+        }
+    }
     """
     user_id = request.json['user_id']
 
