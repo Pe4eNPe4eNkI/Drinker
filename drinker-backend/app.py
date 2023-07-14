@@ -21,7 +21,7 @@ def auth():
     """
     ---- ---- JSON
     ---- GET
-    params: {
+    param: {
         login: str
         password: str
     }
@@ -46,7 +46,7 @@ def register():
     """
     ---- ---- JSON
     ---- PUT
-    params: {
+    param: {
         login: str
         password: str
     }
@@ -84,12 +84,12 @@ def account():
 
     changes password and or login of account
 
-    params: {
+    :param: {
         account_Id: int
         login: str
         password: str
     }
-    return: {
+    :return: {
         status: ok | fail,
         message: str,
     }
@@ -98,10 +98,10 @@ def account():
 
     deletes account of user and all records associeted with it
 
-    params: {
+    :param: {
         account_Id: int
     }
-    return: {
+    :return: {
         status: ok | fail,
         message: str,
     }
@@ -148,10 +148,10 @@ def account_info():
     ---- ---- JSON
     ---- GET
 
-    params: {
+    :param: {
         account_Id: int
     }
-    return: {
+    :return: {
         status: ok | fail,
         message: str,
         login: str,
@@ -163,14 +163,14 @@ def account_info():
     }
     ---- POST
 
-    params: {
+    :param: {
         account_Id: int
         name: str,
         middlename: str,
         surname: str,
         phone: str
     }
-    return: {
+    :return: {
         status: ok | fail,
         message: str
 
@@ -275,6 +275,35 @@ def user():
 
 @app.route('/user/card', methods=['PUT', 'DELETE'])
 def user_card():
+    """
+    ---- ---- JSON
+    ---- PUT
+    :param: {
+        user_id: int
+        card= {
+            serial: int
+            number: int
+            names: str
+            cvi: int
+        }
+    }
+    :return: {
+        status: ok|fail
+        message: str
+    }
+    ---- DELETE
+    :param: {
+        user_id: int
+        card= {
+            number: int
+        }
+    }
+    :return: {
+        status: ok|fail
+        message: str
+    }
+
+    """
     user_id = request.json['user_id']
 
     with db_session.create_session() as session:
@@ -309,6 +338,33 @@ def user_card():
 
 @app.route('/user/cart', methods=['GET', 'POST'])
 def user_cart():
+    """
+    ---- ---- JSON
+    ---- GET
+    :param: {
+        cart_id: int
+    {
+    :return: {
+        status: ok|fail
+        message: str
+        items=[{
+            cart_id: int
+            item_id: int
+            count_items: int
+        }]
+    }
+    ---- POST
+    // adds to cart count item; by default cart has 0 of any items
+    :param: {
+        cart_id
+        item_id: int
+        count: int
+    }
+    :return: {
+        status: ok|fail
+        message: str
+    }
+    """
     with db_session.create_session() as session:
         session: Session
 
@@ -317,11 +373,11 @@ def user_cart():
             items_in_cart: List[Cart] = session.query(Cart).filter(Cart.cart_id == cart_id).all()
             json_of_items_in_cart = []
             for entry in items_in_cart:
-                json_of_items_in_cart.append({"cart_id": entry.cart_id, "count_items": entry.count_items})
+                json_of_items_in_cart.append({"cart_id": entry.cart_id, "item_id": entry.item_id,  "count_items": entry.count_items})
             return jsonify(status="ok", message="Fetched successfully", items=json_of_items_in_cart)
 
         if request.method == "POST":
-            new_item = request.json["new_item"]
+            new_item = request.json["item_id"]
             new_item_count = request.json["count"]
 
             if new_item is None:
@@ -337,6 +393,8 @@ def user_cart():
                 return jsonify(status="ok", message="Added Successfully"), 202
             # for old items we just change count
             old_count = in_cart.count_items
+            if(in_cart.count_items + old_count < 0):
+                return jsonify(status="fail", message=f"cart cant have {in_cart.count_items + old_count} (< 0) items")
             in_cart.count_items = new_item_count + old_count
             session.commit()
             return jsonify(status="ok", message=f"Items added successfully; now {old_count + new_item_count}"), 202
@@ -345,11 +403,42 @@ def user_cart():
 
 @app.route('/order', methods=['GET'])
 def order():
+    """
+    ---- ---- JSON
+    ---- GET
+    :param: {
+        order_id: int
+    }
+    :return: {
+        status: ok|fail
+        message: str
+        order={
+            order_id: int
+            user_id: int
+            courier_id: int
+            address: str
+            status: enum
+            cart_id: int
+        }
+    }
+    """
     order_id = request.json['order_id']
     with db_session.create_session() as session:
         session: Session
-        pass
 
+        order = session.query(Order).filter(Order.order_id == order_id).first()
+        order_details = session.query(OrderDetails).filter(OrderDetails.id == order_id).first()
+        if order is None:
+            return jsonify(status="fail", message=f"Order number {order_id} does not exist")
+        order_info=jsonify(
+            order_id=order_id,
+            user_id=order.user_id,
+            courier_id=order.courier_id,
+            address=order_details.id,
+            status=order_details.status,
+            cart_id=order_details.cart_id
+        )
+        return jsonify(status="ok", message="order found", order=order_info)
 
 @app.route('/order/make', methods=['PUT'])
 def make_order():
@@ -375,8 +464,8 @@ def free_orders():
     """
     ---- ---- JSON
     ---- GET
-    params: {}
-    return: {
+    :param: {}
+    :return: {
         status: ok | fail,
         message: str,
         orders=[
