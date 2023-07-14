@@ -9,7 +9,7 @@ courier2_id: int = 3
 
 # user is registerd here
 def Register(login_, password_):
-    reg = requests.put(f'{url}/register', json={"login": login_, "password": password_}).content
+    reg = requests.put(f'{url}/register', json={"login": login_, "password": password_})
     return reg.json()["account_id"]
 
 
@@ -42,11 +42,12 @@ def GetGallery():
 
 def GetCartId(user_id_):
     get_cart_id = requests.get(f'{url}/user', json={"user_id": user_id_})
-    return get_cart_id.json()["cart_id"]
+    return get_cart_id.json()['user']["cart_id"]
 
 
 def AddToCart(cart_id_, item_id_, count_):
     added_resp = requests.post(f'{url}/user/cart', json={"cart_id": cart_id_, "item_id": item_id_, "count": count_})
+    print(added_resp.content)
     return added_resp.json()["status"]
 
 
@@ -84,22 +85,3 @@ def GetStatus(order_id_):
 def GetFreeOrders():
     get_free_orders = requests.get(f'{url}/order/free')
     return get_free_orders.json()["orders"]
-
-# test are written here
-
-
-login1 = 'u1'
-password1 = 'u1'
-acc_id = Register(login1, password1)
-cart_id = GetCartId(acc_id)
-
-AddItem(1, "bordo", 2, 100)
-AddItem(2, "beer", 1, 10)
-AddItem(3, "jack daniel's", 4, 1000)
-
-AddToCart(acc_id, 1, 2)
-AddToCart(acc_id, 3, 4)
-
-print(ListCart(cart_id))
-
-
