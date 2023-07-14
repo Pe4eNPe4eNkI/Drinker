@@ -20,6 +20,7 @@ class AccountSystem:
     @app.route('/auth', methods=['GET'])
     def auth():
         """
+        Authenticates user; the only way to get an id of a registered user
         ---- ---- JSON
         ---- GET
         :param: {
@@ -53,6 +54,8 @@ class AccountSystem:
     @app.route('/register', methods=['PUT'])
     def register():
         """
+        registers a user;
+        puts Account, AccountInfo, User, CardInfo, Cart for the user into the DB
         ---- ---- JSON
         ---- PUT
         :param: {
@@ -104,8 +107,8 @@ class AccountSystem:
 
         ---- DELETE
 
-        deletes account of user and all records associeted with it
-
+        deletes user and all records associated with it
+        (Account, AccountInfo, User, etc)
         :param: {
             account_id: int
         }
@@ -155,7 +158,7 @@ class AccountSystem:
         """
         ---- ---- JSON
         ---- GET
-
+        returns full name and phone number (and login)
         :param: {
             account_id: int
         }
@@ -170,7 +173,7 @@ class AccountSystem:
 
         }
         ---- POST
-
+        replaces part (or whole) of AccountInfo with provided one
         :param: {
             account_id: int
             name: str,
@@ -219,8 +222,10 @@ class AccountSystem:
         """
         ---- ---- JSON
         ---- GET
+        returns all user-specific info
+        (cards, passport, date of birth, cart, verification status)
         :param: {
-            user_id
+            user_id: int
         }
         :return: {
             status: ok|fail
@@ -240,6 +245,19 @@ class AccountSystem:
                 verified: bool,
                 cart_id: int,
             }
+        }
+        ---- POST
+        allows change of passport and date of birth
+        :param: {
+            user_id: int
+            passport={
+                serial: int
+                number: int
+            }
+        }
+        :return:{
+            status: ok|fail
+            message: str
         }
         """
         user_id = request.json['user_id']
@@ -288,6 +306,7 @@ class AccountSystem:
         """
         ---- ---- JSON
         ---- PUT
+        adds user a card
         :param: {
             user_id: int
             card= {
@@ -302,6 +321,7 @@ class AccountSystem:
             message: str
         }
         ---- DELETE
+        deletes a card from user
         :param: {
             user_id: int
             card= {
@@ -351,6 +371,7 @@ class AccountSystem:
         """
         ---- ---- JSON
         ---- GET
+        returns contents of cart
         :param: {
             cart_id: int
         {
@@ -364,7 +385,9 @@ class AccountSystem:
             }]
         }
         ---- POST
-        // adds to cart count item; by default cart has 0 of any items
+        puts items into the cart if there is none
+        changes count of items if there are some; returns fail if count is negative
+
         :param: {
             cart_id
             item_id: int
@@ -416,6 +439,7 @@ class OrderManager:
         """
         ---- ---- JSON
         ---- GET
+        Returns info about order
         :param: {
             order_id: int
         }
@@ -456,6 +480,8 @@ class OrderManager:
         """
         ---- ---- JSON
         ---- PUT
+        takes cart of a user and turns it into an order
+        user gets a new cart
         :param: {
             user_id: int,
             address: str
@@ -489,6 +515,7 @@ class OrderManager:
         """
         ---- ---- JSON
         ---- GET
+        returns a list of orders, that are not already assigned
         :param: {}
         :return: {
             status: ok | fail,
@@ -520,6 +547,8 @@ class OrderManager:
         """
         ---- ---- JSON
         ---- POST
+        assigns the order to the courier
+        order changes status
         :param: {
             order_id: int
             courier_id: int
@@ -550,6 +579,7 @@ class OrderManager:
         """
         ---- ---- JSON
         ---- POST
+        marks the order delivered successfully
         :param: {
             order_id: int
         }
@@ -577,6 +607,7 @@ class OrderManager:
         """
         ---- ---- JSON
         ---- POST
+        marks the order failed
         :param: {
             order_id: int
         }
@@ -603,6 +634,7 @@ class OrderManager:
         """
         ---- ---- JSON
         ---- GET
+        return all orders for the user
         :param: {
             user_id: int
         }
@@ -672,6 +704,7 @@ class OrderManager:
         """
         ---- ---- JSON
         ---- GET
+        return all orders for the courtier
         :param: {
             courier_id: int
         }
@@ -709,6 +742,7 @@ class ItemManager:
         """
         ---- ---- JSON
         ---- GET
+        returns the list of all tags
         :param: {}
         :return: {
             status: ok|fail,
@@ -734,6 +768,7 @@ class ItemManager:
         """
         ---- ---- JSON
         ---- GET
+        returns item by id
         :param: {
             item_id: int
         }
@@ -755,6 +790,8 @@ class ItemManager:
 
         ---- ---- JSON
         ---- PUT
+        adds an item to rhe DB
+
         :param: {
             name: str,
             price: float,
@@ -787,6 +824,7 @@ class ItemManager:
 
         ---- ---- JSON
         ---- DELETE
+        removes an item from the DB
         :param: {
             item_id: int
         }
@@ -859,6 +897,7 @@ class ItemManager:
         """
         ---- ---- JSON
         ---- GET
+        returns all items
         :param: {}
         :return: {
             status: ok|fail,
@@ -899,6 +938,7 @@ class Main:
 
     @staticmethod
     def init_default_db():
+        # generates default setup for DB
         with db_session.create_session() as session:
             a1 = Account(id=1, login="admin", password="admin")
             a1_i = AccountInfo(account_id=a1.id, name="Admin", surname="Adminov", middlename="Adminovich",
