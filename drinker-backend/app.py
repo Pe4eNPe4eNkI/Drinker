@@ -373,7 +373,19 @@ def find_user_orders():
 @app.route('/order/courier', methods=['GET'])
 def find_courier_orders():
     """
+    ---- ---- JSON
+    ---- GET
+    params: {
+        user_id: int
+    }
+    return: {
+        id: int
+        cart_id: int
+        orders=[{
+            id: in
 
+        }]
+    }
     """
 
     courier_id = request.json['user_id']
@@ -390,66 +402,83 @@ def find_courier_orders():
 
 @app.route('/tags', methods=['GET'])
 def tags():
+    """
+    ---- ---- JSON
+    ---- GET
+    params: {
+    }
+    return: {
+        tags=[{
+            id: int
+            name: str
+        }]
+    }
+    """
+    tag_id = request.json["tag_id"]
     with db_session.create_session() as session:
         session: Session
-        if request.method == 'GET':
-            item_id = request.json['item_id']
-            item: Item = session.query(Item).filter(Item.id == item_id).first()
-            if not item:
-                return jsonify(status='fail', message=f'Not found item with id: {item_id}'), 404
-            if item.tag_id:
-                t: Tag = session.query(Tag).filter(Tag.id == item.tag_id)
-                tag = {"id": t.id, "name": t.name}
-            else:
-                tag = None
-            return jsonify(id=item.id, name=item.name, price=item.price, image_url=item.image_url, desc=item.desc,
-                           tag=tag)
-        if request.method == "PUT":
-            item_id = randrange(1 << 16)
-            item_name = request.json['name']
-            item_price = request.json['price']
-            item_image_url = request.json.get('image_url')
-            item_desc = request.json.get('desc')
-            item_tag = request.json.get('tag_id')
-            if item_tag is not None and not session.query(Tag).filter(Tag.id == item_tag).first():
-                return jsonify(status="fail", message=f"Not found tag with id: {item_tag}")
-            item = Item(id=item_id, name=item_name, price=item_price, image_uml=item_image_url, desc=item_desc,
-                        tag_id=item_tag)
-            session.add(item)
-            session.commit()
-            return jsonify(status="ok", message="Item added", item_id=item_id)
-        if request.method == 'POST':
-            item_id = request.json['item_id']
-            item: Item = session.query(Item).filter(Item.id == item_id).first()
-            if 'name' in request.json:
-                item.name = request.json['name']
-            if 'price' in request.json:
-                item.price = request.json['price']
-            if 'image_uml' in request.json:
-                item.image_uml = request.json['image_uml']
-            if 'desc' in request.json:
-                item.desc = request.json['desc']
-            if 'tag' in request.json:
-                tag_id = request.json['tag_id']
-                if tag_id is not None and not session.query(Tag).filter(Tag.id == tag_id).first():
-                    return jsonify(status="fail", message=f"Not found tag with id: {tag_id}")
-                item.tag = request.json['tag']
-            session.commit()
-            return jsonify(status="ok", message="Changed"), 202
-        if request.method == 'DELETE':
-            item_id = request.json['item_id']
-            for elem in session.query(Cart).filter(Cart.item_id == item_id).all():
-                session.delete(elem)
-            item: Item = session.query(Item).filter(Item.id == item_id).first()
-            if not item:
-                return jsonify(status="fail", message=f"Not found item with id: {item_id}"), 404
-            session.delete(item)
-            session.commit()
-            return jsonify(status="ok", message="Deleted"), 202
+
+        tags_raw = session.query(Tag).filter(Tag.id == tag_id).all()
+        tags=[{"id": tag.id, "name": tag.name} for tag in tags_raw]
+        return jsonify("tags": tags)
+        
 
 
 @app.route('/items', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def items():
+    """
+    ---- ---- JSON
+    ---- GET
+    params: {
+        item_id: int
+    }
+    return: {
+        id: int
+        name: str
+        price: int
+        image_url: str
+        desc: str
+        tag = {
+            id: int
+            name: str
+        }
+    }
+    ---- PUT
+    params: {
+        item_name: str
+        name: str
+        price: int
+        image_url: str
+        desc: str
+        tag_id: int
+    }
+    return: {
+        status ok|fail
+        message: str
+    }
+    ----  POST
+    params: {
+        item_id: int
+        item_name: str
+        name: str
+        price: int
+        image_url: str
+        desc: str
+        tag_id: int
+    }
+    return {
+        status: ok|fail
+        message: str
+    }
+    ---- DELETE
+    params: {
+        item_id: int
+    }
+    return: {
+        status: ok|fail
+        message: str
+    }
+    """
     with db_session.create_session() as session:
         session: Session
         if request.method == 'GET':
@@ -510,6 +539,15 @@ def items():
 
 @app.route('/gallery', methods=['GET'])
 def gallery():
+    """
+    ---- ---- JSON
+    ---- GET
+    params: {}
+    return: {
+        status: ok | fail,
+        message: str
+    }
+    """
     with db_session.create_session() as session:
         session: Session
         if request.method == 'GET':
