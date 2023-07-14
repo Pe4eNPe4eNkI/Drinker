@@ -440,14 +440,14 @@ class OrderManager:
             order_details = session.query(OrderDetails).filter(OrderDetails.id == order_id).first()
             if order_ is None:
                 return jsonify(status="fail", message=f"Order number {order_id} does not exist"), 404
-            order_info = jsonify(
-                order_id=order_id,
-                user_id=order_.user_id,
-                courier_id=order_.courier_id,
-                address=order_details.id,
-                status=order_details.status,
-                cart_id=order_details.cart_id
-            )
+            order_info = {
+                "order_id": order_id,
+                "user_id": order_.user_id,
+                "courier_id": order_.courier_id,
+                "address": order_details.id,
+                "status": order_details.status,
+                "cart_id": order_details.cart_id
+            }
             return jsonify(status="ok", message="order found", order=order_info), 202
 
     @staticmethod
