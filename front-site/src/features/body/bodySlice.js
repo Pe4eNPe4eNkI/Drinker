@@ -1,4 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { Fetch } from "../../app/fetch";
 
 const initialState = {
     items: [
@@ -20,6 +21,21 @@ const initialState = {
     tag: 'none',
     search: '',
 };
+
+export const getItems = createAsyncThunk(
+    'body/getItems',
+    async (amount) => {
+        let response;
+        try {
+            response = await Fetch({
+                ulr: 'gallery',
+                method: 'POST',
+            });
+        } catch (err) {
+            console.dir(err);
+        }
+    }
+)
 
 export const bodySlice = createSlice({
     name: 'body',

@@ -977,6 +977,13 @@ class Main:
 
         app.run(host="0.0.0.0", port=5000)
 
+    @staticmethod
+    @app.after_request
+    def add_header(response):
+        response.headers['Access-Control-Allow-Origin'] = request.headers['Origin']
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
 
 if __name__ == "__main__":
     Main.main()
