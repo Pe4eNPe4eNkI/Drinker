@@ -10,7 +10,6 @@ from const import FILENAME_DB, StatusOrder
 from data import db_session
 from data.db_session import Session
 from data.models import *
-from datetime import date
 
 
 class Main:
