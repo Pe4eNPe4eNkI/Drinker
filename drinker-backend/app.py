@@ -1,3 +1,4 @@
+import datetime
 import os
 import sys
 from random import randrange
@@ -9,6 +10,7 @@ from const import FILENAME_DB, StatusOrder
 from data import db_session
 from data.db_session import Session
 from data.models import *
+from datetime import date
 
 
 class Main:
@@ -32,16 +34,24 @@ class Main:
             status: ok | fail,
             message: str,
             account_id: int
+            type: user|admin|courier
         }
         """
         login = request.json["login"]
         password = request.json["password"]
 
         with db_session.create_session() as session:
+            session: Session
+
             acc: Account = session.query(Account).filter(Account.login == login, Account.password == password).first()
             if not acc:
                 return jsonify(status="fail", message="incorrect login or password"), 403
-            return jsonify(status="ok", message="successful login", account_id=acc.id), 202
+            type_user = "user"
+            if session.query(Admin).filter(Admin.account_id == acc.id).first():
+                type_user = "admin"
+            elif session.query(Courier).filter(Courier.account_id == acc.id).first():
+                type_user = "courier"
+            return jsonify(status="ok", message="successful login", account_id=acc.id, type=type_user), 202
 
     @staticmethod
     @app.route('/register', methods=['PUT'])
@@ -220,7 +230,7 @@ class Main:
             status: ok|fail
             message: str
             user={
-                cards= [{
+                cards=[{
                     number: str
                     names: str
                     date: str
@@ -258,19 +268,19 @@ class Main:
                 else:
                     passport_data = None
 
-                return jsonify(status="ok", message="Founded user", user={
+                birth_date = datetime.datetime.strptime(usr.birth, "%d.%m.%Y") if usr.birth else datetime.datetime.now()
+                verified = (datetime.datetime.now() - birth_date).days >= 365.25 * 18
+                return jsonify(status="ok", message="Found user", user={
                     "cards": cards_data,
                     "passport": passport_data,
                     "birth": usr.birth,
-                    "verified": usr.verified,
+                    "verified": verified,
                     "cart_id": usr.cart_id,
                 }), 202
             if request.method == "POST":
                 if 'passport' in request.json:
                     passport: dict = request.json["passport"]
                     usr.passport = f"{passport['serial']} {passport['number']}"
-                if 'verified' in request.json:
-                    usr.verified = request.json['verified']
                 if 'birth' in request.json:
                     usr.birth = request.json['birth']
                 session.commit()
@@ -445,6 +455,20 @@ class Main:
     @staticmethod
     @app.route('/order/make', methods=['PUT'])
     def make_order():
+        """
+        ---- ---- JSON
+        ---- PUT
+        :param: {
+            user_id: int,
+            address: str
+        }
+        :return: {
+            status: ok|fail,
+            message: str,
+            order_id: int
+        }
+        """
+
         user_id = request.json['user_id']
         address = request.json['address']
         with db_session.create_session() as session:
@@ -452,10 +476,10 @@ class Main:
             usr: Cart = session.query(User).filter(User.account_id == user_id).first()
             if not usr:
                 return jsonify(status="fail", message=f"Not found user with id: {user_id}"), 404
-            order_details = OrderDetails(id=randrange(1 << 16), cart_id=usr.cart_id, address=address)
+            order_details = OrderDetails(id=randrange(Main.generate_id()), cart_id=usr.cart_id, address=address)
             order_ = Order(order_id=order_details.id, user_id=user_id, courier_id=None)
 
-            cart = CartDetails(randrange(1 << 16))
+            cart = CartDetails(randrange(Main.generate_id()))
             usr.cart_id = cart.id
             session.add_all([order_details, order_, cart])
             session.commit()
@@ -751,7 +775,7 @@ class Main:
                     "id": item.id, "name": item.name, "price": item.price,
                     "image_url": item.image_url, "desc": item.desc, "tag": tag})
             if request.method == "PUT":
-                item_id = randrange(1 << 16)
+                item_id = randrange(Main.generate_id())
                 item_name = request.json['name']
                 item_price = request.json['price']
                 item_image_url = request.json.get('image_url')
@@ -830,16 +854,37 @@ class Main:
             return jsonify(status="ok", message="get all items", items=items_json), 202
 
     @staticmethod
-    def main():
-        if '--reset' in sys.argv:
-            if os.path.isfile(FILENAME_DB):
-                os.remove(FILENAME_DB)
-        db_session.global_init(FILENAME_DB)
-        if '--reset' in sys.argv:
-            with db_session.create_session() as session:
-                pass
+    def init_default_db():
+        with db_session.create_session() as session:
+            a1 = Account(id=1, login="admin", password="admin")
+            a1_i = AccountInfo(account_id=a1.id, name="Admin", surname="Adminov", middlename="Adminovich",
+                               phone="+79998880000")
+            a1_a = Admin(account_id=a1.id)
 
-        Main.app.run(host="127.0.0.1", port=5000)
+            a2 = Account(id=2, login="courier", password="courier")
+            a2_i = AccountInfo(account_id=a2.id, name="Courier", surname="Courierov", middlename="Courierovich",
+                               phone="+79998880001")
+            a2_c = Courier(account_id=a2.id)
+
+            a3 = Account(id=3, login="courier2", password="courier2")
+            a3_i = AccountInfo(account_id=a3.id, name="Sup", surname="Supov", middlename="Supovich",
+                               phone="+79998880002")
+            a3_c = Courier(account_id=a3.id)
+
+            session.add_all([a1, a1_i, a1_a, a2, a2_i, a2_c, a3, a3_i, a3_c])
+            session.commit()
+
+    @staticmethod
+    def main():
+        if '--reset' in sys.argv and os.path.isfile(FILENAME_DB):
+            os.remove(FILENAME_DB)
+
+        db_session.global_init(FILENAME_DB)
+
+        if '--reset' in sys.argv:
+            Main.init_default_db()
+
+        Main.app.run(host="0.0.0.0", port=5000)
 
 
 if __name__ == "__main__":
