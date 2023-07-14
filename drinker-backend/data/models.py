@@ -2,13 +2,6 @@ from .db_session import SqlAlchemyBase
 from sqlalchemy import ForeignKey, Column, String, Integer, Float, Boolean, Date
 
 
-class Token(SqlAlchemyBase):
-    __tablename__ = "tokens"
-
-    token = Column(String, primary_key=True, index=True)
-    account_id = Column(String, ForeignKey('accounts.id'))
-
-
 class Account(SqlAlchemyBase):
     __tablename__ = "accounts"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -35,7 +28,6 @@ class User(SqlAlchemyBase):
     passport = Column(String)
     birth = Column(String)
     cart_id = Column(Integer, ForeignKey('cart_details.id'), nullable=False)
-    verified = Column(Boolean, nullable=False, default=False)
 
 
 class Admin(SqlAlchemyBase):
