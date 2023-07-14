@@ -4,16 +4,29 @@ import styles from './Body.module.css';
 import Separate from '../separate/Separate';
 import Gallery from './gallery/Gallery';
 import Category from './category/Category';
+import { useSelector } from 'react-redux';
+import { selectAccType } from '../header/user/userSlice';
+import Courier from './courier/Courier';
 
 function Body() {
+    const accType = useSelector(selectAccType);
+
     return (
-        <div className={styles.container}>
-            <TopBar/>
-            <Separate>
-                <Category/>
-                <Gallery/>
-            </Separate>
-        </div>
+        <>
+        {
+            accType == 'courier'
+            ?
+            <Courier/>
+            :
+            <div className={styles.container}>
+                <TopBar/>
+                <Separate>
+                    <Category/>
+                    <Gallery/>
+                </Separate>
+            </div>
+        }
+        </>
     );
 }
 

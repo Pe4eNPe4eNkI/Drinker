@@ -9,24 +9,24 @@ function Category() {
     const set = (tag) => (e) => dispatch(setTag(tag));
     const list = [
         {
-            key: 'a',
+            key: 'beer',
             value: 'ПИВО',
         },
         {
-            key: 'b',
+            key: 'liqueur',
             value: 'ЛИКЕР',
         },
         {
-            key: 'c',
+            key: 'vine',
             value: 'ВИНО',
         },
         {
-            key: 'd',
+            key: 'brandy',
             value: 'БРЕНДИ',
         },
         {
-            key: 'e',
-            value: 'КОНЬЯК',
+            key: 'whiskey',
+            value: 'ВИСКИ',
         },
     ];
 

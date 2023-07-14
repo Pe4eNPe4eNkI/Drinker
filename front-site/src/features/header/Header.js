@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactModal from 'react-modal';
 import { useState } from 'react';
-import { UseSelector, useSelector } from 'react-redux/es/hooks/useSelector';
+import { useSelector } from 'react-redux';
 import styles from './Header.module.css';
 import cart from './ShoppingCart.svg';
 import user from './UserSquare.svg';
@@ -13,10 +13,13 @@ import Separate from '../separate/Separate';
 import RightSide from './user/right_side/RightSide';
 import { selectUserLogin } from './headerSlice';
 import StartButtons from './start_buttons/StartButton';
+import Cart from './cart/Crat';
+import { selectAccType } from './user/userSlice';
 
 function Header() {
   const [mode, setMode] = useState('none');
   const is_login = useSelector(selectUserLogin);
+  const accType = useSelector(selectAccType);
 
   return (
     <>
@@ -27,9 +30,12 @@ function Header() {
         </div>
         <div className={styles.title}>Drink bear, drinker!</div>
         <div className={styles.nav}>
+        {
+          accType == 'user' && 
           <div className={styles.ico} onClick={(e)=>setMode('cart')}>
             <img src={cart}/>
           </div>
+        }
           <div className={styles.ico} onClick={(e)=>setMode('user')}>
             <img src={user}/>
           </div>
@@ -48,7 +54,7 @@ function Header() {
         overlayClassName="Overlay"
     >
       <Modal ico={cart} close={()=>setMode('none')}>
-        {is_login ? 'a' : <StartButtons/>}
+        {is_login ? <Cart/> : <StartButtons/>}
       </Modal>
     </ReactModal>
 

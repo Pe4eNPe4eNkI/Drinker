@@ -44,6 +44,10 @@ function Order({
                     >{name}, {price}&#8381;, x {count}</div>
                 )}
             </div>
+            <div className={styles.result}>
+                <div>Итог</div>
+                <div>{order.reduce((ac, {price})=>ac+=parseFloat(price), 0)}&#8381;</div>
+            </div>
         </div>
     );
 }

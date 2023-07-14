@@ -27,6 +27,8 @@
   width: 60%;
   margin: 3rem auto 0 auto;
   overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
 }
 
 .Overlay {
