@@ -26,6 +26,7 @@
   background-color: #fff;
   width: 60%;
   margin: 3rem auto 0 auto;
+  overflow-y: scroll;
 }
 
 .Overlay {
@@ -35,4 +36,14 @@
   right: 0;
   bottom: 0;
   background-color: #000000aa;
+}
+
+.button {
+  font-family: 'Open Sans';
+  font-weight: bold;
+  font-size: 2rem;
+  padding: 1rem;
+  border: none;
+  outline: none;
+  background-color: #989898aa;
 }

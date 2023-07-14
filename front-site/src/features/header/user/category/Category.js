@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import styles from './Category.module.css';
+import { useSelector, useDispatch } from 'react-redux';
+import { setMode, selectMode } from '../userSlice';
 
 function Category() {
-    const [mode, setMode] = useState('order');
-    const set = (key) => (e) => setMode(key);
+    const dispatch = useDispatch();
+    const mode = useSelector(selectMode);
+
+    const set = (key) => (e) => dispatch(setMode(key));
     const options = [
         {
             key: 'edit',

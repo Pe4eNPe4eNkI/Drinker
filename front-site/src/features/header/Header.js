@@ -1,16 +1,22 @@
 import React from 'react';
 import ReactModal from 'react-modal';
 import { useState } from 'react';
+import { UseSelector, useSelector } from 'react-redux/es/hooks/useSelector';
 import styles from './Header.module.css';
 import cart from './ShoppingCart.svg';
 import user from './UserSquare.svg';
 import bear_back from './HeaderColorStrip.jpg';
 import logo from './logo.png';
 import Modal from '../modal/Modal';
-import Category from '../user/category/Category';
+import Category from './user/category/Category';
+import Separate from '../separate/Separate';
+import RightSide from './user/right_side/RightSide';
+import { selectUserLogin } from './headerSlice';
+import StartButtons from './start_buttons/StartButton';
 
 function Header() {
   const [mode, setMode] = useState('none');
+  const is_login = useSelector(selectUserLogin);
 
   return (
     <>
@@ -42,7 +48,7 @@ function Header() {
         overlayClassName="Overlay"
     >
       <Modal ico={cart} close={()=>setMode('none')}>
-        
+        {is_login ? 'a' : <StartButtons/>}
       </Modal>
     </ReactModal>
 
@@ -53,7 +59,15 @@ function Header() {
         overlayClassName="Overlay"
     >
       <Modal ico={user} close={() => setMode('none')}>
-        <Category/>
+        {
+          is_login ? <>
+            <Separate>
+              <Category/>
+              <RightSide/>
+            </Separate>
+          </> :
+          <StartButtons/>
+        }
       </Modal>
     </ReactModal>
     </>
