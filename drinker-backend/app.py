@@ -196,7 +196,7 @@ class AccountSystem:
             if request.method == 'GET':
                 return jsonify(status="ok", message="Account found", login=acc.login, name=acc_info.name,
                                middlename=acc_info.middlename,
-                               surname=acc_info.surname, phone=acc_info.phone),202
+                               surname=acc_info.surname, phone=acc_info.phone), 202
             if request.method == 'POST':
                 acc_name = request.json["name"]
                 acc_surname = request.json["surname"]
@@ -611,6 +611,18 @@ class OrderManager:
             message: str,
             orders=[
                 {
+                    user_info={
+                        name: str,
+                        surname: str,
+                        middlename: str,
+                        phone: str
+                    }
+                    courier_info={
+                        name: str,
+                        surname: str,
+                        middlename: str,
+                        phone: str
+                    }
                     id: int,
                     cart_id: int,
                     address: str,
@@ -627,8 +639,31 @@ class OrderManager:
             order_ids: List[int] = list(
                 map(lambda x: x.order_id, session.query(Order).filter(Order.user_id == user_id).all()))
             orders: List[OrderDetails] = session.query(OrderDetails).filter(OrderDetails.id.in_(order_ids)).all()
-            order_data = [{"id": x.id, "cart_id": x.cart_id, "address": x.address, "status": x.status} for x in
-                          orders]
+            order_data = []
+            for x in orders:
+                o: Order = session.query(Order).filter(Order.order_id == x.id).first()
+                user: AccountInfo = session.query(AccountInfo).filter(AccountInfo.account_id == o.user_id).first()
+                courier: AccountInfo = session.query(AccountInfo).filter(AccountInfo.account_id == o.courier_id).first()
+
+                elem = {
+                    "id": x.id,
+                    "user_info": {
+                        "name": user.name,
+                        "surname": user.surname,
+                        "middlename": user.middlename,
+                        "phone": user.phone
+                    } if user else None,
+                    "courier_info": {
+                        "name": courier.name,
+                        "surname": courier.surname,
+                        "middlename": courier.middlename,
+                        "phone": courier.phone
+                    } if courier else None,
+                    "cart_id": x.cart_id,
+                    "address": x.address,
+                    "status": x.status
+                }
+                order_data.append(elem)
             return jsonify(status="ok", message="user orders", orders=order_data), 202
 
     @staticmethod
@@ -788,7 +823,7 @@ class ItemManager:
                             tag_id=item_tag)
                 session.add(item)
                 session.commit()
-                return jsonify(status="ok", message="Item added", item_id=item_id),202
+                return jsonify(status="ok", message="Item added", item_id=item_id), 202
             if request.method == 'POST':
                 item_id = request.json['item_id']
                 item: Item = session.query(Item).filter(Item.id == item_id).first()
@@ -850,7 +885,8 @@ class ItemManager:
             items_json = [{
                 "id": item.id, "name": item.name, "price": item.price, "image_url": item.image_url, "desc": item.desc,
                 "tag": {"id": item.tag_id,
-                        "name": session.query(Tag).filter(Tag.id == item.tag_id).first().name} if item.tag_id != None else None
+                        "name": session.query(Tag).filter(
+                            Tag.id == item.tag_id).first().name} if item.tag_id != None else None
             } for item in items_]
 
             return jsonify(status="ok", message="get all items", items=items_json), 202
