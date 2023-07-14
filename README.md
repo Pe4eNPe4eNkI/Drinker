@@ -5,7 +5,7 @@
 Our project is aimed at the practice of software architecture design
 
 ### Built With
-Backend - Python,  Flask, PHP
+Backend - Python,  Flask, PHP, SQLAlchemy
 
 Frontend - JavaScript, React
 
