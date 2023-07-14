@@ -474,10 +474,10 @@ class OrderManager:
             usr: Cart = session.query(User).filter(User.account_id == user_id).first()
             if not usr:
                 return jsonify(status="fail", message=f"Not found user with id: {user_id}"), 404
-            order_details = OrderDetails(id=randrange(Main.generate_id()), cart_id=usr.cart_id, address=address)
+            order_details = OrderDetails(id=Main.generate_id(), cart_id=usr.cart_id, address=address)
             order_ = Order(order_id=order_details.id, user_id=user_id, courier_id=None)
 
-            cart = CartDetails(randrange(Main.generate_id()))
+            cart = CartDetails(id=Main.generate_id())
             usr.cart_id = cart.id
             session.add_all([order_details, order_, cart])
             session.commit()
@@ -515,8 +515,8 @@ class OrderManager:
             return jsonify(status="ok", message="free orders", orders=order_data), 202
 
     @staticmethod
-    @app.route('/order/accept', methods=['POST'])
-    def order_accept():
+    @app.route('/order/assign', methods=['POST'])
+    def order_assign():
         """
         ---- ---- JSON
         ---- POST
@@ -776,7 +776,7 @@ class ItemManager:
                     "id": item.id, "name": item.name, "price": item.price,
                     "image_url": item.image_url, "desc": item.desc, "tag": tag}), 202
             if request.method == "PUT":
-                item_id = randrange(Main.generate_id())
+                item_id = Main.generate_id()
                 item_name = request.json['name']
                 item_price = request.json['price']
                 item_image_url = request.json.get('image_url')

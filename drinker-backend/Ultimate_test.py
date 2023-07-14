@@ -78,3 +78,21 @@ print(print_cart_resp.content)
 
 print()
 print("make order")
+make_order_resp = requests.put(f'{url}/order/make', json={"user_id": acc_id, "address": "petropavlovskaya 115"})
+order_id = make_order_resp.json()["order_id"]
+print(make_order_resp.content)
+
+print()
+print("assign order to a courier")
+assign_order = requests.post(f'{url}/order/assign', json={"order_id": order_id, "courier_id": courier_id})
+print(assign_order.content)
+
+print()
+print("complete order")
+complete_order = requests.post(f'{url}/order/done', json={"order_id": order_id})
+print(complete_order.content)
+
+print()
+print("check status")
+check_status = requests.get(f'{url}/order', json={"order_id": order_id})
+print(check_status.content)
