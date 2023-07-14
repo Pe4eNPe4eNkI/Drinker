@@ -17,12 +17,12 @@ app = Flask(__name__)
 class AccountSystem:
 
     @staticmethod
-    @app.route('/auth', methods=['GET'])
+    @app.route('/auth', methods=['POST'])
     def auth():
         """
         Authenticates user; the only way to get an id of a registered user
         ---- ---- JSON
-        ---- GET
+        ---- POST
         :param: {
             login: str
             password: str
@@ -153,11 +153,11 @@ class AccountSystem:
                 return jsonify(status="ok", message="Deleted"), 202
 
     @staticmethod
-    @app.route('/account/info', methods=['GET', 'POST'])
-    def account_info():
+    @app.route('/account/info/get', methods=['POST'])
+    def account_info_get():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         returns full name and phone number (and login)
         :param: {
             account_id: int
@@ -172,6 +172,25 @@ class AccountSystem:
             phone: str
 
         }
+        """
+        with db_session.create_session() as session:
+            session: Session
+
+            account_id: int = request.json["account_id"]
+            acc: Account = session.query(Account).filter(Account.id == account_id).first()
+            if not acc:
+                return jsonify(status="fail", message=f"Account with id{account_id} does not exit"), 410
+
+            acc_info: AccountInfo = session.query(AccountInfo).filter(AccountInfo.account_id == account_id).first()
+            return jsonify(status="ok", message="Account found", login=acc.login, name=acc_info.name,
+                           middlename=acc_info.middlename,
+                           surname=acc_info.surname, phone=acc_info.phone), 202
+
+    @staticmethod
+    @app.route('/account/info', methods=['POST'])
+    def account_info():
+        """
+        ---- ---- JSON
         ---- POST
         replaces part (or whole) of AccountInfo with provided one
         :param: {
@@ -196,32 +215,27 @@ class AccountSystem:
                 return jsonify(status="fail", message=f"Account with id{account_id} does not exit"), 410
 
             acc_info: AccountInfo = session.query(AccountInfo).filter(AccountInfo.account_id == account_id).first()
-            if request.method == 'GET':
-                return jsonify(status="ok", message="Account found", login=acc.login, name=acc_info.name,
-                               middlename=acc_info.middlename,
-                               surname=acc_info.surname, phone=acc_info.phone), 202
-            if request.method == 'POST':
-                acc_name = request.json["name"]
-                acc_surname = request.json["surname"]
-                acc_middlename = request.json["middlename"]
-                acc_phone = request.json["phone"]
-                if acc_name:
-                    acc_info.name = acc_name
-                if acc_surname:
-                    acc_info.surname = acc_surname
-                if acc_middlename:
-                    acc_info.middlename = acc_middlename
-                if acc_phone:
-                    acc_info.phone = acc_phone
-                session.commit()
-                return jsonify(status="ok", message=f"Account {account_id} details were changed successfully"), 202
+            acc_name = request.json["name"]
+            acc_surname = request.json["surname"]
+            acc_middlename = request.json["middlename"]
+            acc_phone = request.json["phone"]
+            if acc_name:
+                acc_info.name = acc_name
+            if acc_surname:
+                acc_info.surname = acc_surname
+            if acc_middlename:
+                acc_info.middlename = acc_middlename
+            if acc_phone:
+                acc_info.phone = acc_phone
+            session.commit()
+            return jsonify(status="ok", message=f"Account {account_id} details were changed successfully"), 202
 
     @staticmethod
-    @app.route('/user', methods=['GET', 'POST'])
-    def user():
+    @app.route('/user/get', methods=['POST'])
+    def user_get():
         """
-        ---- ---- JSON
-        ---- GET
+         ---- ---- JSON
+        ---- POST
         returns all user-specific info
         (cards, passport, date of birth, cart, verification status)
         :param: {
@@ -246,6 +260,43 @@ class AccountSystem:
                 cart_id: int,
             }
         }
+        """
+        user_id = request.json['user_id']
+
+        with db_session.create_session() as session:
+            session: Session
+
+            usr: User = session.query(User).filter(User.account_id == user_id).first()
+            if not usr:
+                return jsonify(status="fail", message=f"Not found user with id {user_id}"), 404
+            cards: List[Card] = list(
+                map(lambda x: x.card_number, session.query(Card).filter(Card.user_id == user_id).all()))
+            cards_details: List[CardDetails] = session.query(CardDetails).filter(
+                CardDetails.number.in_(cards)).all()
+            cards_data = list(
+                map(lambda x: {"number": x.number, "names": x.names, "date": x.date, "cvi": x.cvi}, cards_details))
+            passport: str = None if not usr.passport else usr.passport
+            if passport is not None:
+                serial, number = list(map(int, passport.split()))
+                passport_data = {"serial": serial, "number": number}
+            else:
+                passport_data = None
+
+            birth_date = datetime.datetime.strptime(usr.birth, "%d.%m.%Y") if usr.birth else datetime.datetime.now()
+            verified = (datetime.datetime.now() - birth_date).days >= 365.25 * 18
+            return jsonify(status="ok", message="Found user", user={
+                "cards": cards_data,
+                "passport": passport_data,
+                "birth": usr.birth,
+                "verified": verified,
+                "cart_id": usr.cart_id,
+            }), 202
+
+    @staticmethod
+    @app.route('/user', methods=['POST'])
+    def user():
+        """
+        ---- ---- JSON
         ---- POST
         allows change of passport and date of birth
         :param: {
@@ -268,37 +319,13 @@ class AccountSystem:
             usr: User = session.query(User).filter(User.account_id == user_id).first()
             if not usr:
                 return jsonify(status="fail", message=f"Not found user with id {user_id}"), 404
-            if request.method == "GET":
-                cards: List[Card] = list(
-                    map(lambda x: x.card_number, session.query(Card).filter(Card.user_id == user_id).all()))
-                cards_details: List[CardDetails] = session.query(CardDetails).filter(
-                    CardDetails.number.in_(cards)).all()
-                cards_data = list(
-                    map(lambda x: {"number": x.number, "names": x.names, "date": x.date, "cvi": x.cvi}, cards_details))
-                passport: str = None if not usr.passport else usr.passport
-                if passport is not None:
-                    serial, number = list(map(int, passport.split()))
-                    passport_data = {"serial": serial, "number": number}
-                else:
-                    passport_data = None
-
-                birth_date = datetime.datetime.strptime(usr.birth, "%d.%m.%Y") if usr.birth else datetime.datetime.now()
-                verified = (datetime.datetime.now() - birth_date).days >= 365.25 * 18
-                return jsonify(status="ok", message="Found user", user={
-                    "cards": cards_data,
-                    "passport": passport_data,
-                    "birth": usr.birth,
-                    "verified": verified,
-                    "cart_id": usr.cart_id,
-                }), 202
-            if request.method == "POST":
-                if 'passport' in request.json:
-                    passport: dict = request.json["passport"]
-                    usr.passport = f"{passport['serial']} {passport['number']}"
-                if 'birth' in request.json:
-                    usr.birth = request.json['birth']
-                session.commit()
-                return jsonify(status="ok", message="Changed"), 202
+            if 'passport' in request.json:
+                passport: dict = request.json["passport"]
+                usr.passport = f"{passport['serial']} {passport['number']}"
+            if 'birth' in request.json:
+                usr.birth = request.json['birth']
+            session.commit()
+            return jsonify(status="ok", message="Changed"), 202
 
     @staticmethod
     @app.route('/user/card', methods=['PUT', 'DELETE'])
@@ -366,11 +393,11 @@ class AccountSystem:
                 return jsonify(status='ok', message='Deleted'), 202
 
     @staticmethod
-    @app.route('/user/cart', methods=['GET', 'POST'])
-    def user_cart():
+    @app.route('/user/cart/get', methods=['POST'])
+    def user_cart_get():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         returns contents of cart
         :param: {
             cart_id: int
@@ -384,6 +411,24 @@ class AccountSystem:
                 count_items: int
             }]
         }
+        """
+        with db_session.create_session() as session:
+            session: Session
+
+            cart_id: int = request.json["cart_id"]
+            items_in_cart: List[Cart] = session.query(Cart).filter(Cart.cart_id == cart_id).all()
+            json_of_items_in_cart = []
+            for entry in items_in_cart:
+                json_of_items_in_cart.append(
+                    {"cart_id": entry.cart_id, "item_id": entry.item_id, "count_items": entry.count_items})
+            return jsonify(status="ok", message="Fetched successfully", items=json_of_items_in_cart), 202
+
+
+    @staticmethod
+    @app.route('/user/cart', methods=['POST'])
+    def user_cart():
+        """
+        ---- ---- JSON
         ---- POST
         puts items into the cart if there is none
         changes count of items if there are some; returns fail if count is negative
@@ -402,43 +447,35 @@ class AccountSystem:
             session: Session
 
             cart_id: int = request.json["cart_id"]
-            if request.method == "GET":
-                items_in_cart: List[Cart] = session.query(Cart).filter(Cart.cart_id == cart_id).all()
-                json_of_items_in_cart = []
-                for entry in items_in_cart:
-                    json_of_items_in_cart.append(
-                        {"cart_id": entry.cart_id, "item_id": entry.item_id, "count_items": entry.count_items})
-                return jsonify(status="ok", message="Fetched successfully", items=json_of_items_in_cart), 202
 
-            if request.method == "POST":
-                new_item = request.json["item_id"]
-                new_item_count = request.json["count"]
+            new_item = request.json["item_id"]
+            new_item_count = request.json["count"]
 
-                if new_item is None:
-                    return jsonify(status="fail", message="Item ID is missing"), 400
-                if new_item_count is None:
-                    new_item_count = 1
-                in_cart = session.query(Cart).filter(Cart.item_id == new_item).first()
-                if in_cart is None:
-                    # item is new
-                    new_cart = Cart(cart_id=cart_id, item_id=new_item, count_items=new_item_count)
-                    session.add(new_cart)
-                    session.commit()
-                    return jsonify(status="ok", message="Added Successfully"), 202
-                # for old items we just change count
-                old_count = in_cart.count_items
-                in_cart.count_items = new_item_count + old_count
+            if new_item is None:
+                return jsonify(status="fail", message="Item ID is missing"), 400
+            if new_item_count is None:
+                new_item_count = 1
+            in_cart = session.query(Cart).filter(Cart.item_id == new_item).first()
+            if in_cart is None:
+                # item is new
+                new_cart = Cart(cart_id=cart_id, item_id=new_item, count_items=new_item_count)
+                session.add(new_cart)
                 session.commit()
-                return jsonify(status="ok", message=f"Items added successfully; now {old_count + new_item_count}"), 202
+                return jsonify(status="ok", message="Added Successfully"), 202
+            # for old items we just change count
+            old_count = in_cart.count_items
+            in_cart.count_items = new_item_count + old_count
+            session.commit()
+            return jsonify(status="ok", message=f"Items added successfully; now {old_count + new_item_count}"), 202
 
 
 class OrderManager:
     @staticmethod
-    @app.route('/order', methods=['GET'])
+    @app.route('/order', methods=['POST'])
     def order():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         Returns info about order
         :param: {
             order_id: int
@@ -510,11 +547,11 @@ class OrderManager:
             return jsonify(status="ok", message="created order", order_id=order_details.id), 202
 
     @staticmethod
-    @app.route('/order/free', methods=['GET'])
+    @app.route('/order/free', methods=['POST'])
     def free_orders():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         returns a list of orders, that are not already assigned
         :param: {}
         :return: {
@@ -629,11 +666,11 @@ class OrderManager:
             return jsonify(status="ok", message=f"Order has failed"), 202
 
     @staticmethod
-    @app.route('/order/user', methods=['GET'])
+    @app.route('/order/user', methods=['POST'])
     def find_user_orders():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         return all orders for the user
         :param: {
             user_id: int
@@ -699,11 +736,11 @@ class OrderManager:
             return jsonify(status="ok", message="user orders", orders=order_data), 202
 
     @staticmethod
-    @app.route('/order/courier', methods=['GET'])
+    @app.route('/order/courier', methods=['POST'])
     def find_courier_orders():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         return all orders for the courtier
         :param: {
             courier_id: int
@@ -737,11 +774,11 @@ class OrderManager:
 class ItemManager:
 
     @staticmethod
-    @app.route('/tags', methods=['GET'])
+    @app.route('/tags', methods=['POST'])
     def tags():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         returns the list of all tags
         :param: {}
         :return: {
@@ -763,11 +800,11 @@ class ItemManager:
             return jsonify(status="ok", message="get all items", tags=tags_json), 202
 
     @staticmethod
-    @app.route('/items', methods=['GET', 'PUT', 'POST', 'DELETE'])
-    def items():
+    @app.route('/items/get', methods=['POST'])
+    def items_get():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         returns item by id
         :param: {
             item_id: int
@@ -787,7 +824,26 @@ class ItemManager:
                 }
             }
         }
+        """
+        with db_session.create_session() as session:
+            session: Session
+            item_id = request.json['item_id']
+            item: Item = session.query(Item).filter(Item.id == item_id).first()
+            if not item:
+                return jsonify(status='fail', message=f'Not found item with id: {item_id}'), 404
+            if item.tag_id:
+                t: Tag = session.query(Tag).filter(Tag.id == item.tag_id)
+                tag = {"id": t.id, "name": t.name}
+            else:
+                tag = None
+            return jsonify(status="ok", message="get item", item={
+                "id": item.id, "name": item.name, "price": item.price,
+                "image_url": item.image_url, "desc": item.desc, "tag": tag}), 202
 
+    @staticmethod
+    @app.route('/items', methods=['PUT', 'POST', 'DELETE'])
+    def items():
+        """
         ---- ---- JSON
         ---- PUT
         adds an item to rhe DB
@@ -835,19 +891,6 @@ class ItemManager:
         """
         with db_session.create_session() as session:
             session: Session
-            if request.method == 'GET':
-                item_id = request.json['item_id']
-                item: Item = session.query(Item).filter(Item.id == item_id).first()
-                if not item:
-                    return jsonify(status='fail', message=f'Not found item with id: {item_id}'), 404
-                if item.tag_id:
-                    t: Tag = session.query(Tag).filter(Tag.id == item.tag_id)
-                    tag = {"id": t.id, "name": t.name}
-                else:
-                    tag = None
-                return jsonify(status="ok", message="get item", item={
-                    "id": item.id, "name": item.name, "price": item.price,
-                    "image_url": item.image_url, "desc": item.desc, "tag": tag}), 202
             if request.method == "PUT":
                 item_id = Main.generate_id()
                 item_name = request.json['name']
@@ -892,11 +935,11 @@ class ItemManager:
                 return jsonify(status="ok", message="Deleted"), 202
 
     @staticmethod
-    @app.route('/gallery', methods=['GET'])
+    @app.route('/gallery', methods=['POST'])
     def gallery():
         """
         ---- ---- JSON
-        ---- GET
+        ---- POST
         returns all items
         :param: {}
         :return: {
