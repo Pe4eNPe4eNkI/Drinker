@@ -84,7 +84,7 @@ class Main:
 
             session.add_all([new_account, new_user, new_info, new_cart])
             session.commit()
-            return jsonify(status="ok", message="User registered successfully", account_id=new_account.id)
+            return jsonify(status="ok", message="User registered successfully", account_id=new_account.id), 202
 
     @staticmethod
     @app.route('/account', methods=['POST', 'DELETE'])
@@ -96,7 +96,7 @@ class Main:
         changes password and or login of account
 
         :param: {
-            account_Id: int
+            account_id: int
             login: str
             password: str
         }
@@ -110,7 +110,7 @@ class Main:
         deletes account of user and all records associeted with it
 
         :param: {
-            account_Id: int
+            account_id: int
         }
         :return: {
             status: ok | fail,
@@ -160,7 +160,7 @@ class Main:
         ---- GET
 
         :param: {
-            account_Id: int
+            account_id: int
         }
         :return: {
             status: ok | fail,
@@ -175,7 +175,7 @@ class Main:
         ---- POST
 
         :param: {
-            account_Id: int
+            account_id: int
             name: str,
             middlename: str,
             surname: str,
@@ -199,7 +199,7 @@ class Main:
             if request.method == 'GET':
                 return jsonify(status="ok", message="Account found", login=acc.login, name=acc_info.name,
                                middlename=acc_info.middlename,
-                               surname=acc_info.surname, phone=acc_info.phone)
+                               surname=acc_info.surname, phone=acc_info.phone),202
             if request.method == 'POST':
                 acc_name = request.json["name"]
                 acc_surname = request.json["surname"]
@@ -388,7 +388,7 @@ class Main:
                 for entry in items_in_cart:
                     json_of_items_in_cart.append(
                         {"cart_id": entry.cart_id, "item_id": entry.item_id, "count_items": entry.count_items})
-                return jsonify(status="ok", message="Fetched successfully", items=json_of_items_in_cart)
+                return jsonify(status="ok", message="Fetched successfully", items=json_of_items_in_cart), 202
 
             if request.method == "POST":
                 new_item = request.json["item_id"]
@@ -440,7 +440,7 @@ class Main:
             order_ = session.query(Order).filter(Order.order_id == order_id).first()
             order_details = session.query(OrderDetails).filter(OrderDetails.id == order_id).first()
             if order_ is None:
-                return jsonify(status="fail", message=f"Order number {order_id} does not exist")
+                return jsonify(status="fail", message=f"Order number {order_id} does not exist"), 404
             order_info = jsonify(
                 order_id=order_id,
                 user_id=order_.user_id,
@@ -449,7 +449,7 @@ class Main:
                 status=order_details.status,
                 cart_id=order_details.cart_id
             )
-            return jsonify(status="ok", message="order found", order=order_info)
+            return jsonify(status="ok", message="order found", order=order_info), 202
 
     @staticmethod
     @app.route('/order/make', methods=['PUT'])
@@ -543,7 +543,7 @@ class Main:
             order_details: OrderDetails = session.query(OrderDetails).filter(OrderDetails.id == order_id).first()
             order_details.status = StatusOrder.ON_WAY
             session.commit()
-            return jsonify(status="ok", message=f"Accepted order")
+            return jsonify(status="ok", message=f"Accepted order"), 202
 
     @staticmethod
     @app.route('/order/done', methods=['POST'])
@@ -570,7 +570,7 @@ class Main:
                 return jsonify(status="fail", message=f"Not found order with id: {order_id}"), 404
             order_details.status = StatusOrder.DONE
             session.commit()
-            return jsonify(status="ok", message=f"Order is done")
+            return jsonify(status="ok", message=f"Order is done"), 202
 
     @staticmethod
     @app.route('/order/fail', methods=['POST'])
@@ -596,7 +596,7 @@ class Main:
                 return jsonify(status="fail", message=f"Not found order with id: {order_id}"), 404
             order_details.status = StatusOrder.FAILED
             session.commit()
-            return jsonify(status="ok", message=f"Order is fail")
+            return jsonify(status="ok", message=f"Order has failed"), 202
 
     @staticmethod
     @app.route('/order/user', methods=['GET'])
@@ -630,7 +630,7 @@ class Main:
             orders: List[OrderDetails] = session.query(OrderDetails).filter(OrderDetails.id.in_(order_ids)).all()
             order_data = [{"id": x.id, "cart_id": x.cart_id, "address": x.address, "status": x.status} for x in
                           orders]
-            return jsonify(status="ok", message="user orders", orders=order_data)
+            return jsonify(status="ok", message="user orders", orders=order_data), 202
 
     @staticmethod
     @app.route('/order/courier', methods=['GET'])
@@ -664,7 +664,7 @@ class Main:
             orders: List[OrderDetails] = session.query(OrderDetails).filter(OrderDetails.id.in_(order_ids)).all()
             order_data = [{"id": x.id, "cart_id": x.cart_id, "address": x.address, "status": x.status} for x in
                           orders]
-            return jsonify(status="ok", message="courier orders", orders=order_data)
+            return jsonify(status="ok", message="courier orders", orders=order_data), 202
 
     @staticmethod
     @app.route('/tags', methods=['GET'])
@@ -772,7 +772,7 @@ class Main:
                     tag = None
                 return jsonify(status="ok", message="get item", item={
                     "id": item.id, "name": item.name, "price": item.price,
-                    "image_url": item.image_url, "desc": item.desc, "tag": tag})
+                    "image_url": item.image_url, "desc": item.desc, "tag": tag}), 202
             if request.method == "PUT":
                 item_id = randrange(Main.generate_id())
                 item_name = request.json['name']
@@ -781,12 +781,12 @@ class Main:
                 item_desc = request.json.get('desc')
                 item_tag = request.json.get('tag_id')
                 if item_tag is not None and not session.query(Tag).filter(Tag.id == item_tag).first():
-                    return jsonify(status="fail", message=f"Not found tag with id: {item_tag}")
-                item = Item(id=item_id, name=item_name, price=item_price, image_uml=item_image_url, desc=item_desc,
+                    return jsonify(status="fail", message=f"Not found tag with id: {item_tag}"), 404
+                item = Item(id=item_id, name=item_name, price=item_price, image_url=item_image_url, desc=item_desc,
                             tag_id=item_tag)
                 session.add(item)
                 session.commit()
-                return jsonify(status="ok", message="Item added", item_id=item_id)
+                return jsonify(status="ok", message="Item added", item_id=item_id),202
             if request.method == 'POST':
                 item_id = request.json['item_id']
                 item: Item = session.query(Item).filter(Item.id == item_id).first()
@@ -794,14 +794,14 @@ class Main:
                     item.name = request.json['name']
                 if 'price' in request.json:
                     item.price = request.json['price']
-                if 'image_uml' in request.json:
-                    item.image_uml = request.json['image_uml']
+                if 'image_url' in request.json:
+                    item.image_url = request.json['image_url']
                 if 'desc' in request.json:
                     item.desc = request.json['desc']
                 if 'tag' in request.json:
                     tag_id = request.json['tag_id']
                     if tag_id is not None and not session.query(Tag).filter(Tag.id == tag_id).first():
-                        return jsonify(status="fail", message=f"Not found tag with id: {tag_id}")
+                        return jsonify(status="fail", message=f"Not found tag with id: {tag_id}"), 404
                     item.tag = request.json['tag']
                 session.commit()
                 return jsonify(status="ok", message="Changed"), 202
@@ -847,7 +847,8 @@ class Main:
             items_: List[Item] = session.query(Item).all()
             items_json = [{
                 "id": item.id, "name": item.name, "price": item.price, "image_url": item.image_url, "desc": item.desc,
-                "tag": {"id": item.tag_id, "name": session.query(Tag).filter(Tag.id == item.tag_id).first().name}
+                "tag": {"id": item.tag_id,
+                        "name": session.query(Tag).filter(Tag.id == item.tag_id).first().name} if item.tag_id != None else None
             } for item in items_]
 
             return jsonify(status="ok", message="get all items", items=items_json), 202
@@ -869,6 +870,13 @@ class Main:
             a3_i = AccountInfo(account_id=a3.id, name="Sup", surname="Supov", middlename="Supovich",
                                phone="+79998880002")
             a3_c = Courier(account_id=a3.id)
+
+            beer: Tag = Tag(name="beer", id=1)
+            wine: Tag = Tag(name="wine", id=2)
+            brandy: Tag = Tag(name="brandy", id=3)
+            liqueur: Tag = Tag(name="liqueur", id=4)
+            whiskey: Tag = Tag(name="whiskey", id=5)
+            session.add_all([beer, wine, brandy, liqueur, whiskey])
 
             session.add_all([a1, a1_i, a1_a, a2, a2_i, a2_c, a3, a3_i, a3_c])
             session.commit()

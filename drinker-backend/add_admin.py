@@ -32,5 +32,5 @@ if __name__ == "__main__":
     name_: str = input("name: ")
     middlename_: str = input("middlename: ")
     surname_: str = input("surname: ")
-    phone_: int = int(input("phone number: "))
+    phone_: int = input("phone number: ")
     add_admin(id_, login_, password_, name_, middlename_, surname_, phone_)
