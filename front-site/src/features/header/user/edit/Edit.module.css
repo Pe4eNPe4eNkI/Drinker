@@ -1,0 +1,12 @@
+.container {
+    
+}
+
+.block {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.block>* {
+    margin-bottom: .5rem;
+}

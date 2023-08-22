@@ -1,0 +1,23 @@
+.container {
+    padding: 1rem;
+    box-sizing: border-box;
+    background-color: #FFE8DA;
+    width: 100%;
+    font-family: 'OpenSans';
+}
+
+.container>* {
+    margin-bottom: .5rem;
+}
+
+.buttons {
+    display: flex;
+    justify-content: end;
+}
+
+.container button {
+    padding: .3rem;
+    font-size: 1.2rem;
+    box-sizing: border-box;
+    margin-right: 1rem;
+}

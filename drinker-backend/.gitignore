@@ -1,0 +1,6 @@
+.idea
+data/main.db
+tests.py
+__pycache__
+tests
+token.txt
